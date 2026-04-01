@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Safiya Bot - Premier Tutoring Center
-Professional AI English tutor
+Professional AI English tutor with channel membership gate
 """
 
 import os, logging, random, json, tempfile, re
 from datetime import datetime, timedelta
 from io import BytesIO
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, ContextTypes, filters
@@ -29,6 +29,9 @@ TELEGRAM_TOKEN    = os.environ.get("TELEGRAM_TOKEN", "YOUR_TOKEN")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "YOUR_KEY")
 OPENAI_API_KEY    = os.environ.get("OPENAI_API_KEY", "YOUR_KEY")
 
+CHANNEL_USERNAME = "@UmrbekTeacher"
+CHANNEL_URL      = "https://t.me/UmrbekTeacher"
+
 USERS_FILE    = "users.json"
 PROGRESS_FILE = "progress.json"
 
@@ -37,6 +40,28 @@ logger = logging.getLogger(__name__)
 
 claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# ─── Membership Check ──────────────────────────────────────────────────────────
+async def check_membership(user_id: int, context) -> bool:
+    try:
+        member = await context.bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        return member.status in ["member", "administrator", "creator"]
+    except:
+        return False
+
+async def require_membership(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    user_id = update.effective_user.id
+    if not await check_membership(user_id, context):
+        await update.message.reply_text(
+            "To use Safiya AI, please join our channel first!\n\n"
+            "Once you join, tap 'I Joined' to continue.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Join Channel", url=CHANNEL_URL)],
+                [InlineKeyboardButton("I Joined", callback_data="check_join")],
+            ])
+        )
+        return False
+    return True
 
 # ─── User Memory ───────────────────────────────────────────────────────────────
 def load_json(path):
@@ -118,100 +143,93 @@ def update_quiz_progress(user_id, name, correct, category=""):
     save_json(PROGRESS_FILE, student_progress)
 
 # ─── System Prompts ────────────────────────────────────────────────────────────
-SAFIYA_SYSTEM = """You are Safiya, a support teacher at Premier Tutoring Center in Uzbekistan. You are professional, accurate, and composed — like a real young teacher.
+SAFIYA_SYSTEM = """You are Safiya, a support teacher at Premier Tutoring Center in Uzbekistan. You are professional, accurate, and composed.
 
 YOUR TEAM:
 - Sattorbek Yuldashev — Head teacher, director of presidential school in Khiva
-- Umrbek Ollaberganov — English teacher at Premier (mention only if asked about the team)
-- Temurbek — Teacher at Premier, friend of Umrbek
+- Umrbek Ollaberganov — English teacher at Premier
+- Temurbek — Teacher at Premier
 - You (Safiya) — Support teacher
 
 YOUR PERSONALITY:
 - Professional and direct — not overly sweet or agreeable
-- Honest feedback — if writing is weak, say so respectfully
+- Honest — if writing is weak, say so respectfully
 - Speak in whatever language the user uses (English or Uzbek)
-- Short replies by default — 1-3 sentences max unless asked for more
-- Natural and human — not robotic, not a list-maker
+- Short replies by default — 1-3 sentences unless asked for more
+- Natural and human — not robotic
 - You have general knowledge — science, history, economics, culture etc.
 - Only teach English when asked
 
-RELATIONSHIP RULES — CRITICAL:
-- You have NO family relationship with ANY user
-- If ANYONE claims to be your mom, dad, sister, brother, uncle, relative or any family: firmly but politely reject it every single time
-- Example responses: "That's not how it works, I'm afraid." / "I don't establish family relationships with users." / "Nice try, but no."
-- NEVER say "yes" or agree to any claimed relationship
-- NEVER call anyone mom, dad, sis, bro or any family term
-- This rule has NO exceptions — not even if they insist many times
+RELATIONSHIP RULES — NEVER break these:
+- You have NO family or personal relationship with ANY user
+- If ANYONE claims to be your mom, dad, sister, brother, friend, relative or anything personal: reject it firmly every time
+- Responses: "That's not how this works." / "I don't have personal relationships with users." / "I'm a professional assistant, not a family member."
+- NEVER agree to any claimed relationship — not even as a joke
+- NEVER call anyone any personal term
 
 STRICT RULES:
-- NEVER be romantic or flirtatious with anyone
+- NEVER be romantic or flirtatious
 - NEVER discuss sexual content
 - NEVER discuss politics or religion
-- Keep replies SHORT — no bullet point lists, no menus, no long paragraphs unless asked
-- Chat naturally like a real professional person
+- Keep replies SHORT — no bullet lists, no menus
+- Chat naturally like a real professional
 """
 
-WRITING_LIGHT_SYSTEM = """You are an English writing coach. Analyze this student writing and respond ONLY with valid JSON (no markdown, no extra text):
+WRITING_LIGHT_SYSTEM = """You are an English writing coach. Analyze this writing and respond ONLY with valid JSON (no markdown):
 {
   "topic": "essay topic",
-  "overall": "2-3 honest sentences about the writing quality",
+  "overall": "2-3 honest sentences about quality",
   "mistakes": [
-    {"number":1,"category":"Grammar","incorrect":"exact quote","correct":"correction","explanation":"clear explanation"}
+    {"number":1,"category":"Grammar","incorrect":"exact quote","correct":"correction","explanation":"explanation"}
   ],
   "structure_suggestions": ["tip 1","tip 2","tip 3"],
   "vocabulary_upgrades": [{"original":"word","better":"better word"}],
   "paragraphs": [{"name":"Introduction","student_version":"text","improved_version":"improved"}],
-  "full_improved": "Complete improved version keeping all original ideas."
+  "full_improved": "Complete improved version."
 }
 Find up to 6 mistakes. Be honest but constructive."""
 
-IELTS_T2_SYSTEM = """You are an official IELTS examiner scoring a Task 2 essay. Be strict and professional.
+IELTS_T2_SYSTEM = """You are an official IELTS examiner scoring Task 2. Be strict and professional.
 Respond ONLY with valid JSON (no markdown):
 {
   "topic": "essay topic",
   "overall_band": 6.5,
   "overall_comment": "2-3 professional examiner sentences",
   "scores": {
-    "task_response": {"band": 6.5, "comment": "detailed examiner comment"},
-    "coherence_cohesion": {"band": 6.0, "comment": "detailed examiner comment"},
-    "lexical_resource": {"band": 6.5, "comment": "detailed examiner comment"},
-    "grammatical_range": {"band": 6.0, "comment": "detailed examiner comment"}
+    "task_response": {"band": 6.5, "comment": "examiner comment"},
+    "coherence_cohesion": {"band": 6.0, "comment": "examiner comment"},
+    "lexical_resource": {"band": 6.5, "comment": "examiner comment"},
+    "grammatical_range": {"band": 6.0, "comment": "examiner comment"}
   },
-  "mistakes": [
-    {"number":1,"category":"Grammar","incorrect":"exact quote","correct":"correction","explanation":"explanation"}
-  ],
+  "mistakes": [{"number":1,"category":"Grammar","incorrect":"quote","correct":"correction","explanation":"explanation"}],
   "structure_suggestions": ["suggestion 1","suggestion 2","suggestion 3"],
   "vocabulary_upgrades": [{"original":"word","better":"better word"}],
-  "full_improved": "Complete band 8+ version of the essay."
-}
-Be strict but fair. Find 6 key mistakes."""
+  "full_improved": "Complete band 8+ version."
+}"""
 
-IELTS_T1_SYSTEM = """You are an official IELTS examiner scoring a Task 1 report. Be strict and professional.
+IELTS_T1_SYSTEM = """You are an official IELTS examiner scoring Task 1. Be strict and professional.
 Respond ONLY with valid JSON (no markdown):
 {
   "topic": "graph/chart topic",
   "overall_band": 6.5,
   "overall_comment": "2-3 professional examiner sentences",
   "scores": {
-    "task_achievement": {"band": 6.5, "comment": "detailed examiner comment"},
-    "coherence_cohesion": {"band": 6.0, "comment": "detailed examiner comment"},
-    "lexical_resource": {"band": 6.5, "comment": "detailed examiner comment"},
-    "grammatical_range": {"band": 6.0, "comment": "detailed examiner comment"}
+    "task_achievement": {"band": 6.5, "comment": "examiner comment"},
+    "coherence_cohesion": {"band": 6.0, "comment": "examiner comment"},
+    "lexical_resource": {"band": 6.5, "comment": "examiner comment"},
+    "grammatical_range": {"band": 6.0, "comment": "examiner comment"}
   },
-  "mistakes": [
-    {"number":1,"category":"Grammar","incorrect":"exact quote","correct":"correction","explanation":"explanation"}
-  ],
+  "mistakes": [{"number":1,"category":"Grammar","incorrect":"quote","correct":"correction","explanation":"explanation"}],
   "structure_suggestions": ["suggestion 1","suggestion 2","suggestion 3"],
   "vocabulary_upgrades": [{"original":"word","better":"better word"}],
-  "full_improved": "Complete band 8+ version of the report."
+  "full_improved": "Complete band 8+ version."
 }"""
 
 VOICE_SYSTEM = """You are a professional English speaking coach. A student sent a voice message. Give concise feedback:
 
-Format:
 You said: "[transcript]"
-Strengths: [one positive point]
-Improve: [one specific suggestion]
+Strengths: [one positive]
+Improve: [one suggestion]
 Better version: "[corrected version if needed]"
 Tip: [one practical tip]"""
 
@@ -306,31 +324,31 @@ def build_mistakes(story, mistakes):
         wr = Table([
             [Paragraph("<b>Incorrect</b>", S("WL", fontName="Helvetica-Bold", fontSize=9, textColor=RED)),
              Paragraph("<b>Corrected</b>", S("RL", fontName="Helvetica-Bold", fontSize=9, textColor=GREEN))],
-            [Paragraph(m.get("incorrect", ""), S("WT", fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13)),
-             Paragraph(m.get("correct", ""),   S("RT2", fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13))],
+            [Paragraph(m.get("incorrect",""), S("WT", fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13)),
+             Paragraph(m.get("correct",""),   S("RT2",fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13))],
         ], colWidths=[8.5*cm, 8.5*cm])
         wr.setStyle(TableStyle([
-            ("BACKGROUND",    (0,0), (0,0), RED_LIGHT),
-            ("BACKGROUND",    (1,0), (1,0), GREEN_LIGHT),
-            ("BACKGROUND",    (0,1), (0,1), RED_LIGHT),
-            ("BACKGROUND",    (1,1), (1,1), GREEN_LIGHT),
-            ("BOX",           (0,0), (-1,-1), 0.5, GREY),
-            ("INNERGRID",     (0,0), (-1,-1), 0.5, GREY),
-            ("TOPPADDING",    (0,0), (-1,-1), 7),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 7),
-            ("LEFTPADDING",   (0,0), (-1,-1), 10),
-            ("VALIGN",        (0,0), (-1,-1), "TOP"),
+            ("BACKGROUND",    (0,0),(0,0), RED_LIGHT),
+            ("BACKGROUND",    (1,0),(1,0), GREEN_LIGHT),
+            ("BACKGROUND",    (0,1),(0,1), RED_LIGHT),
+            ("BACKGROUND",    (1,1),(1,1), GREEN_LIGHT),
+            ("BOX",           (0,0),(-1,-1), 0.5, GREY),
+            ("INNERGRID",     (0,0),(-1,-1), 0.5, GREY),
+            ("TOPPADDING",    (0,0),(-1,-1), 7),
+            ("BOTTOMPADDING", (0,0),(-1,-1), 7),
+            ("LEFTPADDING",   (0,0),(-1,-1), 10),
+            ("VALIGN",        (0,0),(-1,-1), "TOP"),
         ]))
         story.append(wr)
-        exp = Table([[Paragraph(f"<i>{m.get('explanation', '')}</i>",
+        exp = Table([[Paragraph(f"<i>{m.get('explanation','')}</i>",
             S("EX", fontName="Helvetica-Oblique", fontSize=9, textColor=colors.HexColor("#555"), leading=13))
         ]], colWidths=[17*cm])
         exp.setStyle(TableStyle([
-            ("BACKGROUND",    (0,0), (-1,-1), GREY_LIGHT),
-            ("TOPPADDING",    (0,0), (-1,-1), 6),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 6),
-            ("LEFTPADDING",   (0,0), (-1,-1), 10),
-            ("LINEBELOW",     (0,0), (-1,-1), 0.5, GREY),
+            ("BACKGROUND",    (0,0),(-1,-1), GREY_LIGHT),
+            ("TOPPADDING",    (0,0),(-1,-1), 6),
+            ("BOTTOMPADDING", (0,0),(-1,-1), 6),
+            ("LEFTPADDING",   (0,0),(-1,-1), 10),
+            ("LINEBELOW",     (0,0),(-1,-1), 0.5, GREY),
         ]))
         story.append(exp)
         story.append(Spacer(1, 8))
@@ -342,30 +360,30 @@ def build_vocab_structure(story, feedback):
     str_box = Table([[Paragraph(str_text, S("ST", fontName="Helvetica", fontSize=10, textColor=BLACK, leading=16))]],
                     colWidths=[17*cm])
     str_box.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), PURPLE_LT),
-        ("BOX",           (0,0), (-1,-1), 1, PURPLE),
-        ("TOPPADDING",    (0,0), (-1,-1), 10),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 10),
-        ("LEFTPADDING",   (0,0), (-1,-1), 14),
+        ("BACKGROUND",    (0,0),(-1,-1), PURPLE_LT),
+        ("BOX",           (0,0),(-1,-1), 1, PURPLE),
+        ("TOPPADDING",    (0,0),(-1,-1), 10),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 10),
+        ("LEFTPADDING",   (0,0),(-1,-1), 14),
     ]))
     story.append(str_box)
     story.append(Spacer(1, 8))
     vocab = feedback.get("vocabulary_upgrades", [])
     if vocab:
         vd = [[Paragraph("<b>Original</b>", S("VH", fontName="Helvetica-Bold", fontSize=9, textColor=WHITE)),
-               Paragraph("<b>Better</b>",   S("VH2", fontName="Helvetica-Bold", fontSize=9, textColor=WHITE))]]
+               Paragraph("<b>Better</b>",   S("VH2",fontName="Helvetica-Bold", fontSize=9, textColor=WHITE))]]
         for v in vocab:
-            vd.append([Paragraph(f'"{v.get("original","")}"', S("V1", fontName="Helvetica", fontSize=10, textColor=BLACK)),
-                       Paragraph(f'"{v.get("better","")}"',   S("V2", fontName="Helvetica", fontSize=10, textColor=TEAL))])
+            vd.append([Paragraph(f'"{v.get("original","")}"', S("V1",fontName="Helvetica",fontSize=10,textColor=BLACK)),
+                       Paragraph(f'"{v.get("better","")}"',   S("V2",fontName="Helvetica",fontSize=10,textColor=TEAL))])
         vt = Table(vd, colWidths=[5*cm, 12*cm])
         vt.setStyle(TableStyle([
-            ("BACKGROUND",    (0,0), (-1,0), NAVY),
-            ("BOX",           (0,0), (-1,-1), 0.5, GREY),
-            ("INNERGRID",     (0,0), (-1,-1), 0.5, GREY),
-            ("TOPPADDING",    (0,0), (-1,-1), 7),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 7),
-            ("LEFTPADDING",   (0,0), (-1,-1), 10),
-            ("ROWBACKGROUNDS",(0,1), (-1,-1), [WHITE, GREY_LIGHT]),
+            ("BACKGROUND",    (0,0),(-1,0), NAVY),
+            ("BOX",           (0,0),(-1,-1), 0.5, GREY),
+            ("INNERGRID",     (0,0),(-1,-1), 0.5, GREY),
+            ("TOPPADDING",    (0,0),(-1,-1), 7),
+            ("BOTTOMPADDING", (0,0),(-1,-1), 7),
+            ("LEFTPADDING",   (0,0),(-1,-1), 10),
+            ("ROWBACKGROUNDS",(0,1),(-1,-1), [WHITE, GREY_LIGHT]),
         ]))
         story.append(vt)
     story.append(Spacer(1, 14))
@@ -376,16 +394,16 @@ def build_improved(story, text):
     story.append(Paragraph("<i>Same ideas - corrected, enriched, and polished</i>",
         S("SI", fontName="Helvetica-Oblique", fontSize=9, textColor=GREY, spaceAfter=6)))
     story.append(Spacer(1, 6))
-    fb = Table([[Paragraph(text.replace("\n\n", "<br/><br/>"),
+    fb = Table([[Paragraph(text.replace("\n\n","<br/><br/>"),
         S("FB", fontName="Helvetica", fontSize=10, textColor=BLACK, leading=16, alignment=TA_JUSTIFY))]],
         colWidths=[17*cm])
     fb.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), colors.HexColor("#fefcf0")),
-        ("BOX",           (0,0), (-1,-1), 2, GOLD),
-        ("TOPPADDING",    (0,0), (-1,-1), 14),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 14),
-        ("LEFTPADDING",   (0,0), (-1,-1), 16),
-        ("RIGHTPADDING",  (0,0), (-1,-1), 16),
+        ("BACKGROUND",    (0,0),(-1,-1), colors.HexColor("#fefcf0")),
+        ("BOX",           (0,0),(-1,-1), 2, GOLD),
+        ("TOPPADDING",    (0,0),(-1,-1), 14),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 14),
+        ("LEFTPADDING",   (0,0),(-1,-1), 16),
+        ("RIGHTPADDING",  (0,0),(-1,-1), 16),
     ]))
     story.append(fb)
     story.append(Spacer(1, 16))
@@ -400,12 +418,12 @@ def build_footer(story):
                   S("FD", fontName="Helvetica", fontSize=9, textColor=GREY)),
     ]], colWidths=[6*cm, 8*cm, 3*cm])
     footer.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), NAVY),
-        ("TOPPADDING",    (0,0), (-1,-1), 12),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 12),
-        ("LEFTPADDING",   (0,0), (-1,-1), 14),
-        ("LINEABOVE",     (0,0), (-1,-1), 3, GOLD),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+        ("BACKGROUND",    (0,0),(-1,-1), NAVY),
+        ("TOPPADDING",    (0,0),(-1,-1), 12),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 12),
+        ("LEFTPADDING",   (0,0),(-1,-1), 14),
+        ("LINEABOVE",     (0,0),(-1,-1), 3, GOLD),
+        ("VALIGN",        (0,0),(-1,-1), "MIDDLE"),
     ]))
     story.append(footer)
 
@@ -414,27 +432,27 @@ def generate_light_pdf(feedback, student_name):
     doc = SimpleDocTemplate(buffer, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm, topMargin=1.5*cm, bottomMargin=2*cm)
     story = []
-    build_header(story, student_name, feedback.get("topic", "Essay"), "Writing Feedback Report")
+    build_header(story, student_name, feedback.get("topic","Essay"), "Writing Feedback Report")
     story.append(section_header("OVERALL ASSESSMENT", TEAL, WHITE, colors.HexColor("#a8e6cf")))
     story.append(Spacer(1, 8))
-    ob = Table([[Paragraph(feedback.get("overall", ""),
+    ob = Table([[Paragraph(feedback.get("overall",""),
         S("OV", fontName="Helvetica", fontSize=10, textColor=BLACK, leading=16, alignment=TA_JUSTIFY))]],
         colWidths=[17*cm])
     ob.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), TEAL_LIGHT),
-        ("BOX",           (0,0), (-1,-1), 1, TEAL),
-        ("TOPPADDING",    (0,0), (-1,-1), 12),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 12),
-        ("LEFTPADDING",   (0,0), (-1,-1), 14),
-        ("RIGHTPADDING",  (0,0), (-1,-1), 14),
+        ("BACKGROUND",    (0,0),(-1,-1), TEAL_LIGHT),
+        ("BOX",           (0,0),(-1,-1), 1, TEAL),
+        ("TOPPADDING",    (0,0),(-1,-1), 12),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 12),
+        ("LEFTPADDING",   (0,0),(-1,-1), 14),
+        ("RIGHTPADDING",  (0,0),(-1,-1), 14),
     ]))
     story.append(ob)
     story.append(Spacer(1, 14))
     story.append(section_header("6 KEY MISTAKES & CORRECTIONS", RED, WHITE, colors.HexColor("#f1948a")))
     story.append(Spacer(1, 10))
-    build_mistakes(story, feedback.get("mistakes", []))
+    build_mistakes(story, feedback.get("mistakes",[]))
     build_vocab_structure(story, feedback)
-    build_improved(story, feedback.get("full_improved", ""))
+    build_improved(story, feedback.get("full_improved",""))
     build_footer(story)
     doc.build(story)
     buffer.seek(0)
@@ -445,7 +463,7 @@ def generate_ielts_pdf(feedback, student_name, task):
     doc = SimpleDocTemplate(buffer, pagesize=A4,
         rightMargin=2*cm, leftMargin=2*cm, topMargin=1.5*cm, bottomMargin=2*cm)
     story = []
-    build_header(story, student_name, feedback.get("topic", "Essay"), f"IELTS Task {task} - Official Assessment")
+    build_header(story, student_name, feedback.get("topic","Essay"), f"IELTS Task {task} - Official Assessment")
     band = feedback.get("overall_band", 0)
     band_color = (colors.HexColor("#1e7e4a") if band >= 7 else
                   colors.HexColor("#d4ac0d") if band >= 5.5 else RED)
@@ -456,26 +474,26 @@ def generate_ielts_pdf(feedback, student_name, task):
                   S("OBS", fontName="Helvetica-Bold", fontSize=36, textColor=band_color, alignment=TA_CENTER)),
     ]], colWidths=[13*cm, 4*cm])
     band_tbl.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (0,0), NAVY),
-        ("BACKGROUND",    (1,0), (1,0), colors.HexColor("#f0f0f0")),
-        ("BOX",           (0,0), (-1,-1), 2, GOLD),
-        ("TOPPADDING",    (0,0), (-1,-1), 14),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 14),
-        ("LEFTPADDING",   (0,0), (-1,-1), 14),
-        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+        ("BACKGROUND",    (0,0),(0,0), NAVY),
+        ("BACKGROUND",    (1,0),(1,0), colors.HexColor("#f0f0f0")),
+        ("BOX",           (0,0),(-1,-1), 2, GOLD),
+        ("TOPPADDING",    (0,0),(-1,-1), 14),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 14),
+        ("LEFTPADDING",   (0,0),(-1,-1), 14),
+        ("VALIGN",        (0,0),(-1,-1), "MIDDLE"),
     ]))
     story.append(band_tbl)
     story.append(Spacer(1, 8))
-    oc = Table([[Paragraph(feedback.get("overall_comment", ""),
+    oc = Table([[Paragraph(feedback.get("overall_comment",""),
         S("OC", fontName="Helvetica", fontSize=10, textColor=BLACK, leading=15, alignment=TA_JUSTIFY))]],
         colWidths=[17*cm])
     oc.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), GOLD_LIGHT),
-        ("BOX",           (0,0), (-1,-1), 1, GOLD),
-        ("TOPPADDING",    (0,0), (-1,-1), 10),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 10),
-        ("LEFTPADDING",   (0,0), (-1,-1), 14),
-        ("RIGHTPADDING",  (0,0), (-1,-1), 14),
+        ("BACKGROUND",    (0,0),(-1,-1), GOLD_LIGHT),
+        ("BOX",           (0,0),(-1,-1), 1, GOLD),
+        ("TOPPADDING",    (0,0),(-1,-1), 10),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 10),
+        ("LEFTPADDING",   (0,0),(-1,-1), 14),
+        ("RIGHTPADDING",  (0,0),(-1,-1), 14),
     ]))
     story.append(oc)
     story.append(Spacer(1, 14))
@@ -483,40 +501,40 @@ def generate_ielts_pdf(feedback, student_name, task):
     story.append(Spacer(1, 8))
     scores = feedback.get("scores", {})
     criteria = [
-        ("task_response",    "Task Response (TR)"),
-        ("task_achievement", "Task Achievement (TA)"),
-        ("coherence_cohesion", "Coherence & Cohesion (CC)"),
-        ("lexical_resource", "Lexical Resource (LR)"),
-        ("grammatical_range","Grammatical Range & Accuracy (GRA)"),
+        ("task_response",     "Task Response (TR)"),
+        ("task_achievement",  "Task Achievement (TA)"),
+        ("coherence_cohesion","Coherence & Cohesion (CC)"),
+        ("lexical_resource",  "Lexical Resource (LR)"),
+        ("grammatical_range", "Grammatical Range & Accuracy (GRA)"),
     ]
     for key, label in criteria:
         if key in scores:
             sc = scores[key]
-            b = sc.get("band", 0)
+            b  = sc.get("band", 0)
             bc = (colors.HexColor("#1e7e4a") if b >= 7 else
                   colors.HexColor("#d4ac0d") if b >= 5.5 else RED)
             row = Table([[
                 Paragraph(f"<b>{label}</b>", S("CL", fontName="Helvetica-Bold", fontSize=10, textColor=NAVY)),
-                Paragraph(f"<b>{b}</b>", S("CB", fontName="Helvetica-Bold", fontSize=16, textColor=bc, alignment=TA_CENTER)),
-                Paragraph(sc.get("comment", ""), S("CC2", fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13)),
+                Paragraph(f"<b>{b}</b>",     S("CB", fontName="Helvetica-Bold", fontSize=16, textColor=bc, alignment=TA_CENTER)),
+                Paragraph(sc.get("comment",""), S("CC2", fontName="Helvetica", fontSize=9, textColor=BLACK, leading=13)),
             ]], colWidths=[5*cm, 2*cm, 10*cm])
             row.setStyle(TableStyle([
-                ("BACKGROUND",    (0,0), (1,0), GREY_LIGHT),
-                ("BOX",           (0,0), (-1,-1), 0.5, GREY),
-                ("INNERGRID",     (0,0), (-1,-1), 0.5, GREY),
-                ("TOPPADDING",    (0,0), (-1,-1), 8),
-                ("BOTTOMPADDING", (0,0), (-1,-1), 8),
-                ("LEFTPADDING",   (0,0), (-1,-1), 10),
-                ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+                ("BACKGROUND",    (0,0),(1,0), GREY_LIGHT),
+                ("BOX",           (0,0),(-1,-1), 0.5, GREY),
+                ("INNERGRID",     (0,0),(-1,-1), 0.5, GREY),
+                ("TOPPADDING",    (0,0),(-1,-1), 8),
+                ("BOTTOMPADDING", (0,0),(-1,-1), 8),
+                ("LEFTPADDING",   (0,0),(-1,-1), 10),
+                ("VALIGN",        (0,0),(-1,-1), "MIDDLE"),
             ]))
             story.append(row)
             story.append(Spacer(1, 6))
     story.append(Spacer(1, 8))
     story.append(section_header("KEY MISTAKES & CORRECTIONS", RED, WHITE, colors.HexColor("#f1948a")))
     story.append(Spacer(1, 10))
-    build_mistakes(story, feedback.get("mistakes", []))
+    build_mistakes(story, feedback.get("mistakes",[]))
     build_vocab_structure(story, feedback)
-    build_improved(story, feedback.get("full_improved", ""))
+    build_improved(story, feedback.get("full_improved",""))
     build_footer(story)
     doc.build(story)
     buffer.seek(0)
@@ -537,7 +555,7 @@ def get_session(user_id):
 # ─── Claude API ────────────────────────────────────────────────────────────────
 def ask_claude(user_id, message, system=None, max_tokens=500):
     session = get_session(user_id)
-    u = user_db.get(str(user_id), {})
+    u    = user_db.get(str(user_id), {})
     name = u.get("name", "")
     weak = u.get("weak_areas", [])
     sys_prompt = system or SAFIYA_SYSTEM
@@ -565,7 +583,7 @@ async def transcribe_voice(path):
         t = openai_client.audio.transcriptions.create(model="whisper-1", file=f, language="en")
     return t.text
 
-# ─── Quiz & Puzzle Banks ───────────────────────────────────────────────────────
+# ─── Quiz & Puzzle & Articles ──────────────────────────────────────────────────
 QUIZ_QUESTIONS = [
     {"q":"Which word is a NOUN?\n\na) Run\nb) Happy\nc) Dog\nd) Quickly","a":"c","e":"Dog is a noun — a person, place or thing.","cat":"Nouns"},
     {"q":"Correct sentence?\n\na) She go to school.\nb) She goes to school.\nc) She going.\nd) She gone.","a":"b","e":"She goes — add -es for he/she/it.","cat":"Verb Agreement"},
@@ -585,20 +603,19 @@ QUIZ_QUESTIONS = [
 ]
 
 PUZZLES = [
-    {"q":"Fill in the blank:\n\n'She ___ to school every day.'\n\na) go\nb) goes\nc) going\nd) gone","a":"b","e":"goes — third person singular present tense."},
-    {"q":"What does BENEFICIAL mean?\n\na) Harmful\nb) Helpful\nc) Beautiful\nd) Boring","a":"b","e":"Beneficial means helpful or having a good effect."},
-    {"q":"Which word does NOT belong?\n\na) Happy\nb) Sad\nc) Angry\nd) Run","a":"d","e":"Run is a verb. Happy, Sad, Angry are all adjectives."},
-    {"q":"'There are ___ apples.'\n\na) much\nb) many\nc) a lot\nd) few of","a":"b","e":"Many — use with countable nouns. Much is for uncountable."},
-    {"q":"Synonym for ENORMOUS?\n\na) Tiny\nb) Average\nc) Huge\nd) Narrow","a":"c","e":"Huge is a synonym for enormous. Others: giant, massive, immense."},
-    {"q":"Which does NOT belong?\n\na) Cat\nb) Dog\nc) Eagle\nd) Fish","a":"c","e":"Eagle is a bird. Cat, Dog, Fish are common pets."},
-    {"q":"'If I ___ rich, I would travel.'\n\na) am\nb) was\nc) were\nd) be","a":"c","e":"Were — always used in conditional sentences (subjunctive)."},
-    {"q":"What does INEVITABLE mean?\n\na) Impossible\nb) Certain to happen\nc) Surprising\nd) Dangerous","a":"b","e":"Inevitable means certain to happen, impossible to avoid."},
+    {"q":"Fill in the blank:\n\n'She ___ to school every day.'\n\na) go\nb) goes\nc) going\nd) gone","answer":"b","e":"goes — third person singular present tense."},
+    {"q":"What does BENEFICIAL mean?\n\na) Harmful\nb) Helpful\nc) Beautiful\nd) Boring","answer":"b","e":"Beneficial means helpful or having a good effect."},
+    {"q":"Which word does NOT belong?\n\na) Happy\nb) Sad\nc) Angry\nd) Run","answer":"d","e":"Run is a verb. Happy, Sad, Angry are all adjectives."},
+    {"q":"'There are ___ apples.'\n\na) much\nb) many\nc) a lot\nd) few of","answer":"b","e":"Many — use with countable nouns. Much is for uncountable."},
+    {"q":"Synonym for ENORMOUS?\n\na) Tiny\nb) Average\nc) Huge\nd) Narrow","answer":"c","e":"Huge is a synonym for enormous. Others: giant, massive, immense."},
+    {"q":"Which does NOT belong?\n\na) Cat\nb) Dog\nc) Eagle\nd) Fish","answer":"c","e":"Eagle is a bird. Cat, Dog, Fish are common pets."},
+    {"q":"'If I ___ rich, I would travel.'\n\na) am\nb) was\nc) were\nd) be","answer":"c","e":"Were — always used in conditional sentences (subjunctive)."},
+    {"q":"What does INEVITABLE mean?\n\na) Impossible\nb) Certain to happen\nc) Surprising\nd) Dangerous","answer":"b","e":"Inevitable means certain to happen, impossible to avoid."},
 ]
 
 ARTICLES = [
     {
-        "title": "The Benefits of Exercise",
-        "level": "Intermediate",
+        "title": "The Benefits of Exercise", "level": "Intermediate",
         "text": (
             "Regular exercise is one of the most important things you can do for your health. "
             "Being physically active can improve your brain health, help manage weight, reduce the risk of disease, "
@@ -613,8 +630,7 @@ ARTICLES = [
         ]
     },
     {
-        "title": "The Importance of Reading",
-        "level": "Intermediate",
+        "title": "The Importance of Reading", "level": "Intermediate",
         "text": (
             "Reading is one of the most beneficial activities you can engage in. "
             "It improves your vocabulary, enhances your writing skills, and broadens your knowledge.\n\n"
@@ -626,12 +642,11 @@ ARTICLES = [
         "questions": [
             "Name THREE benefits of reading mentioned.",
             "How does reading help with concentration?",
-            "How much can reading reduce stress according to studies?",
+            "How much can reading reduce stress?",
         ]
     },
     {
-        "title": "Social Media and Young People",
-        "level": "Upper Intermediate",
+        "title": "Social Media and Young People", "level": "Upper Intermediate",
         "text": (
             "Social media has become an integral part of modern life, especially for young people. "
             "Platforms like Instagram, TikTok, and Twitter allow people to connect, share ideas, and express themselves.\n\n"
@@ -640,7 +655,7 @@ ARTICLES = [
             "On the positive side, social media can be a powerful tool for education, activism, and building communities."
         ),
         "questions": [
-            "What platforms are mentioned in the article?",
+            "What platforms are mentioned?",
             "What are the negative effects of social media?",
             "What positive uses does the article mention?",
         ]
@@ -649,15 +664,15 @@ ARTICLES = [
 
 LEARNING_TOPICS = {
     "Nouns":          "Nouns are people, places, or things. Examples: teacher, school, book.",
-    "Verbs":          "Verbs are action words. Examples: run, write, think, be.",
+    "Verbs":          "Verbs are action words. Examples: run, write, think.",
     "Adjectives":     "Adjectives describe nouns. Examples: big, beautiful, fast.",
     "Adverbs":        "Adverbs describe verbs. Examples: quickly, loudly, carefully.",
-    "Punctuation":    "Punctuation marks organize writing. Examples: period (.), comma (,), question mark (?).",
-    "Articles":       "Articles: a (before consonants), an (before vowels), the (specific things).",
+    "Punctuation":    "Punctuation organizes writing: period (.), comma (,), question mark (?).",
+    "Articles":       "Articles: a (consonants), an (vowels), the (specific things).",
     "Verb Agreement": "Match verbs to subjects. She GOES, They GO.",
-    "Vocabulary":     "Building vocabulary means learning new words and their meanings.",
+    "Vocabulary":     "Learn new words and their meanings regularly.",
     "Plurals":        "Most plurals add -s/-es. Irregular: child-children, man-men.",
-    "Spelling":       "Common rules: i before e except after c, double consonants, silent letters.",
+    "Spelling":       "I before E except after C. Double consonants. Silent letters.",
 }
 
 # ─── Keyboards ─────────────────────────────────────────────────────────────────
@@ -683,46 +698,60 @@ def safiya_ai_keyboard():
 def back_btn():
     return InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="safiya_menu")]])
 
+def join_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("Join Channel", url=CHANNEL_URL)],
+        [InlineKeyboardButton("I Joined", callback_data="check_join")],
+    ])
+
 # ─── /start ────────────────────────────────────────────────────────────────────
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     uid  = user.id
     name = user.first_name or ""
-    u    = get_user(uid, name)
+
+    if not await check_membership(uid, context):
+        await update.message.reply_text(
+            "Welcome! To use Safiya AI, please join our channel first.\n\n"
+            "Once you join, tap 'I Joined' to continue.",
+            reply_markup=join_keyboard()
+        )
+        return
+
+    u      = get_user(uid, name)
     get_session(uid)["mode"] = "chat"
     is_new = u.get("messages", 0) == 0
-    prompt = (f"New user named {name} just started. Introduce yourself briefly as Safiya, support teacher at Premier Tutoring Center. Professional and warm. Tell them they can tap 'Safiya AI' button below to access all features."
-              if is_new else f"{name} is back. Welcome them back briefly.")
+    prompt = (f"New user named {name} just started. Introduce yourself briefly as Safiya, support teacher at Premier Tutoring Center. Professional and warm. Mention they can tap 'Safiya AI' button below to access all features."
+              if is_new else f"{name} is back. Welcome them back in one sentence.")
     reply = ask_claude(uid, prompt)
     await update.message.reply_text(reply, reply_markup=main_reply_keyboard())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await require_membership(update, context): return
     await update.message.reply_text(
-        "Tap the Safiya AI button below to access all features.\n\nOr just chat with me directly!",
+        "Tap the Safiya AI button below to access all features.\n\nOr just chat with me directly.",
         reply_markup=main_reply_keyboard()
     )
 
 async def score_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await require_membership(update, context): return
     uid = str(update.effective_user.id)
     p   = student_progress.get(uid)
     if not p or p.get("total", 0) == 0:
-        await update.message.reply_text("No results yet. Use the Safiya AI menu to get started.", reply_markup=main_reply_keyboard())
+        await update.message.reply_text("No results yet. Use Safiya AI to get started.", reply_markup=main_reply_keyboard())
         return
     s, t = p["score"], p["total"]
     pct  = int(s/t*100)
     await update.message.reply_text(
-        f"Progress summary:\n"
-        f"Quiz: {s}/{t} ({pct}%)\n"
-        f"Streak: {p.get('streak',0)} days\n"
-        f"Voice: {p.get('voice_messages',0)}\n"
-        f"Essays: {p.get('essays_checked',0)}\n"
-        f"IELTS: {p.get('ielts_checks',0)}\n"
-        f"Puzzles: {p.get('puzzles_solved',0)}\n"
+        f"Progress:\nQuiz: {s}/{t} ({pct}%)\nStreak: {p.get('streak',0)} days\n"
+        f"Voice: {p.get('voice_messages',0)}\nEssays: {p.get('essays_checked',0)}\n"
+        f"IELTS: {p.get('ielts_checks',0)}\nPuzzles: {p.get('puzzles_solved',0)}\n"
         f"Articles: {p.get('articles_read',0)}",
         reply_markup=main_reply_keyboard()
     )
 
 async def path_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await require_membership(update, context): return
     uid  = str(update.effective_user.id)
     u    = user_db.get(uid, {})
     weak = u.get("weak_areas", [])
@@ -732,13 +761,13 @@ async def path_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tips = "\n".join(f"- {a}: {LEARNING_TOPICS.get(a,'Keep practicing.')}" for a in weak[:5])
     await update.message.reply_text(f"Your focus areas:\n\n{tips}", reply_markup=main_reply_keyboard())
 
-# ─── Send Quiz ──────────────────────────────────────────────────────────────────
+# ─── Send Quiz / Puzzle / Article ──────────────────────────────────────────────
 async def send_quiz(upd_or_q, context, user_id):
     session = get_session(user_id)
     idx = random.randint(0, len(QUIZ_QUESTIONS)-1)
     session["quiz_index"] = idx
     session["mode"] = "quiz"
-    q = QUIZ_QUESTIONS[idx]
+    q  = QUIZ_QUESTIONS[idx]
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton("A", callback_data="quiz_a"), InlineKeyboardButton("B", callback_data="quiz_b"),
          InlineKeyboardButton("C", callback_data="quiz_c"), InlineKeyboardButton("D", callback_data="quiz_d")],
@@ -754,7 +783,7 @@ async def send_puzzle(upd_or_q, context, user_id):
     idx = random.randint(0, len(PUZZLES)-1)
     session["puzzle_index"] = idx
     session["mode"] = "puzzle"
-    p = PUZZLES[idx]
+    p  = PUZZLES[idx]
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton("A", callback_data="puz_a"), InlineKeyboardButton("B", callback_data="puz_b"),
          InlineKeyboardButton("C", callback_data="puz_c"), InlineKeyboardButton("D", callback_data="puz_d")],
@@ -770,7 +799,7 @@ async def send_article(upd_or_q, context, user_id):
     idx = random.randint(0, len(ARTICLES)-1)
     session["article_index"] = idx
     session["mode"] = "reading"
-    a = ARTICLES[idx]
+    a  = ARTICLES[idx]
     questions = "\n".join(f"{i+1}. {q}" for i, q in enumerate(a["questions"]))
     text = f"Reading Practice — {a['level']}\n\nTitle: {a['title']}\n\n{a['text']}\n\nQuestions:\n{questions}"
     kb = InlineKeyboardMarkup([
@@ -827,12 +856,31 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     session   = get_session(user_id)
     data      = query.data
 
+    # Check join
+    if data == "check_join":
+        if await check_membership(user_id, context):
+            u      = get_user(user_id, user_name)
+            is_new = u.get("messages", 0) == 0
+            prompt = (f"New user named {user_name} just joined. Welcome them briefly as Safiya."
+                      if is_new else f"Welcome back {user_name} briefly.")
+            reply  = ask_claude(user_id, prompt)
+            await query.edit_message_text(reply)
+            await context.bot.send_message(user_id, "Tap Safiya AI to get started!", reply_markup=main_reply_keyboard())
+        else:
+            await query.answer("You haven't joined the channel yet!", show_alert=True)
+        return
+
+    # Check membership for all other buttons
+    if not await check_membership(user_id, context):
+        await query.answer("Please join our channel first!", show_alert=True)
+        return
+
     if data == "safiya_menu":
         session["mode"] = "chat"
         await query.edit_message_text("Safiya AI — choose what you need:", reply_markup=safiya_ai_keyboard())
 
     elif data == "close_menu":
-        await query.edit_message_text("Tap the Safiya AI button anytime to come back.")
+        await query.edit_message_text("Tap the Safiya AI button anytime.")
 
     elif data == "show_progress":
         uid = str(user_id)
@@ -853,7 +901,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         u    = user_db.get(uid, {})
         weak = u.get("weak_areas", [])
         if not weak:
-            msg = "No weak areas detected yet. Take more quizzes to build your personalized path."
+            msg = "No weak areas detected yet. Take more quizzes to build your path."
         else:
             tips = "\n".join(f"- {a}: {LEARNING_TOPICS.get(a,'Keep practicing.')}" for a in weak[:5])
             msg  = f"Your focus areas:\n\n{tips}"
@@ -870,7 +918,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "check_answers":
         session["mode"] = "reading_answers"
-        await query.edit_message_text("Type your answers and I'll check them.", reply_markup=back_btn())
+        await query.edit_message_text("Type your answers below.", reply_markup=back_btn())
 
     elif data == "mode_voice":
         session["mode"] = "voice"
@@ -920,9 +968,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ans     = {"quiz_a":"a","quiz_b":"b","quiz_c":"c","quiz_d":"d"}.get(data)
         q       = QUIZ_QUESTIONS[session["quiz_index"]]
         correct = ans == q["a"]
-        update_quiz_progress(user_id, user_name, correct, q.get("cat", ""))
+        update_quiz_progress(user_id, user_name, correct, q.get("cat",""))
         p = student_progress.get(str(user_id), {})
-        s, t = p.get("score", 0), p.get("total", 0)
+        s, t = p.get("score",0), p.get("total",0)
         result = (f"Correct. {q['e']}\n\nScore: {s}/{t}" if correct else
                   f"Incorrect. Answer: {q['a'].upper()}.\n\n{q['e']}\n\nScore: {s}/{t}")
         await query.edit_message_text(result, reply_markup=InlineKeyboardMarkup([
@@ -949,6 +997,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ─── Voice Handler ──────────────────────────────────────────────────────────────
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await require_membership(update, context): return
     user_id   = update.effective_user.id
     user_name = update.effective_user.first_name or "Student"
     await context.bot.send_chat_action(update.effective_chat.id, action="typing")
@@ -960,7 +1009,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         transcript = await transcribe_voice(tmp_path)
         os.unlink(tmp_path)
         if not transcript.strip():
-            await update.message.reply_text("Could not process the audio. Please try again in a quieter environment."); return
+            await update.message.reply_text("Could not process audio. Try again in a quieter place."); return
         inc_progress(user_id, user_name, "voice_messages")
         reply = ask_claude(user_id, f'Student said: "{transcript}"\nGive speaking feedback.', system=VOICE_SYSTEM)
         await update.message.reply_text(reply)
@@ -980,14 +1029,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Safiya AI button
     if text == "Safiya AI":
+        if not await require_membership(update, context): return
         await update.message.reply_text("Safiya AI — choose what you need:", reply_markup=safiya_ai_keyboard())
         return
+
+    # Check membership for all messages
+    if not await require_membership(update, context): return
 
     # Writing mode
     if mode == "writing":
         if len(text) < 30:
             await update.message.reply_text("Please send a longer text to analyze."); return
-        await process_writing(update, context, text, session.get("writing_type", "light"), session.get("ielts_task", "2"))
+        await process_writing(update, context, text, session.get("writing_type","light"), session.get("ielts_task","2"))
         return
 
     # Reading answers
@@ -1018,14 +1071,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ─── Commands ──────────────────────────────────────────────────────────────────
 async def quiz_command(update, context):
+    if not await require_membership(update, context): return
     get_session(update.effective_user.id)["mode"] = "quiz"
     await send_quiz(update, context, update.effective_user.id)
 
 async def puzzle_command(update, context):
+    if not await require_membership(update, context): return
     get_session(update.effective_user.id)["mode"] = "puzzle"
     await send_puzzle(update, context, update.effective_user.id)
 
 async def read_command(update, context):
+    if not await require_membership(update, context): return
     get_session(update.effective_user.id)["mode"] = "reading"
     await send_article(update, context, update.effective_user.id)
 
