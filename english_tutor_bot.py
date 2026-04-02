@@ -452,6 +452,7 @@ def skills_levels_keyboard():
 
 def skills_menu_keyboard(level):
     return InlineKeyboardMarkup([[InlineKeyboardButton("📖 Reading",callback_data=f"skill_reading_{level}"),InlineKeyboardButton("✍️ Writing Check",callback_data=f"skill_writing_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
+    InlineKeyboardButton("🎤 Speaking", callback_data=f"skill_speaking_{level}")
 
 def tfng_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("✅ True",callback_data="tfng_true"),InlineKeyboardButton("❌ False",callback_data="tfng_false"),InlineKeyboardButton("❓ Not Given",callback_data="tfng_not_given")]])
@@ -625,6 +626,12 @@ async def button_callback(update,context):
         # Send as new message so article text is always fully visible
         await context.bot.send_message(uid, "Next question coming up... 👇")
         await send_reading_question(query,context,uid,edit=False)
+        elif data.startswith("skill_speaking_"):
+        level=data.replace("skill_speaking_","")
+        sess["skills_level"]=level; sess["mode"]="speaking"
+        topics={"beginner":"Tell me your name and what you like to do.","elementary":"Describe your daily routine.","pre_intermediate":"Talk about your hometown.","intermediate":"Discuss the advantages of technology.","advanced":"Argue for or against social media."}
+        topic=topics.get(level,"Talk about anything in English!")
+        await query.edit_message_text(f"🎤 *Speaking Practice — {level.replace('_',' ').title()}*\n\nYour topic:\n\n*{topic}*\n\nSend me a voice message speaking about this topic!",parse_mode="Markdown",reply_markup=back_btn())
     elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
