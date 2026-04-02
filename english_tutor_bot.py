@@ -442,7 +442,7 @@ PUZZLES=[
 ]
 
 def main_reply_keyboard():
-    return ReplyKeyboardMarkup([[KeyboardButton("Safiya AI"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
+    return ReplyKeyboardMarkup([[KeyboardButton("Safiya AI"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Talk to Safiya")],[KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
 
 def safiya_ai_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Quiz",callback_data="mode_quiz"),InlineKeyboardButton("🧩 Word Puzzle",callback_data="mode_puzzle")],[InlineKeyboardButton("📋 Placement Test",callback_data="placement_start"),InlineKeyboardButton("😂 Memes",callback_data="mode_memes")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
@@ -452,6 +452,72 @@ def skills_levels_keyboard():
 
 def skills_menu_keyboard(level):
     return InlineKeyboardMarkup([[InlineKeyboardButton("📖 Reading",callback_data=f"skill_reading_{level}"),InlineKeyboardButton("✍️ Writing Check",callback_data=f"skill_writing_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
+
+def talk_levels_keyboard():
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="talk_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="talk_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="talk_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="talk_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="talk_level_advanced")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
+
+SPEAKING_QUESTIONS={
+    "beginner":[
+        "What is your name?",
+        "How old are you?",
+        "Where are you from?",
+        "Do you have any brothers or sisters?",
+        "What is your favourite colour?",
+        "What food do you like?",
+        "Do you have a pet?",
+        "What time do you wake up?",
+        "Do you like school?",
+        "What is your favourite animal?",
+    ],
+    "elementary":[
+        "Can you describe your daily routine?",
+        "What do you usually do on weekends?",
+        "Tell me about your best friend.",
+        "What is your favourite subject at school and why?",
+        "Describe your home.",
+        "What sport or hobby do you enjoy?",
+        "Tell me about a place you like to visit.",
+        "What did you do last weekend?",
+        "What kind of music do you like?",
+        "Describe your favourite meal.",
+    ],
+    "pre_intermediate":[
+        "Describe your hometown. What do you like about it?",
+        "Talk about a memorable trip or holiday you have had.",
+        "What are your plans for the future?",
+        "Tell me about someone you admire and why.",
+        "How has technology changed our lives?",
+        "Describe a typical day at school or work.",
+        "What are the advantages of learning English?",
+        "Talk about a film or book you have enjoyed recently.",
+        "How important is family in your culture?",
+        "What would you do if you had one million dollars?",
+    ],
+    "intermediate":[
+        "Do you think social media has a positive or negative effect on society? Why?",
+        "Compare city life and village life. Which do you prefer?",
+        "How important is it to protect the environment? What can individuals do?",
+        "Talk about a challenge you have faced and how you overcame it.",
+        "Do you think gap years are beneficial for students? Why or why not?",
+        "How has your country changed in the last 20 years?",
+        "What qualities make a good teacher?",
+        "Should university education be free? Discuss.",
+        "How do you think artificial intelligence will change our lives?",
+        "Is it better to work for yourself or for a company? Why?",
+    ],
+    "advanced":[
+        "To what extent do you agree that globalisation has done more harm than good?",
+        "Discuss the ethical implications of genetic engineering.",
+        "How should governments balance economic growth with environmental protection?",
+        "Critically evaluate the role of social media in modern politics.",
+        "Is it possible to achieve true gender equality? Discuss the challenges.",
+        "To what extent is poverty a result of individual choices rather than systemic factors?",
+        "Discuss the advantages and disadvantages of a cashless society.",
+        "How has the rise of artificial intelligence affected the job market?",
+        "Should wealthy nations have an obligation to accept refugees? Why or why not?",
+        "Evaluate the impact of colonialism on the developing world today.",
+    ],
+}
 
 def tfng_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("✅ True",callback_data="tfng_true"),InlineKeyboardButton("❌ False",callback_data="tfng_false"),InlineKeyboardButton("❓ Not Given",callback_data="tfng_not_given")]])
@@ -481,12 +547,12 @@ async def send_reading_question(upd_or_q,context,uid,edit=True):
         rm=(f"🎉 *Reading complete!*\n\nYour score: {score}/{total} ({pct}%)\n\n"
             f"{'Excellent work! 🏆' if pct>=80 else 'Good effort! Keep practicing 💪' if pct>=60 else 'Keep reading and you will improve! 😊'}")
         kb=InlineKeyboardMarkup([[InlineKeyboardButton("New Article",callback_data=f"skill_reading_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
-        if edit and hasattr(upd_or_q,"edit_message_text"): await upd_or_q.edit_message_text(rm,parse_mode="Markdown",reply_markup=kb)
-        else: await upd_or_q.message.reply_text(rm,parse_mode="Markdown",reply_markup=kb)
+        chat_id=upd_or_q.message.chat_id if hasattr(upd_or_q,"message") else upd_or_q.effective_chat.id
+        await context.bot.send_message(chat_id=chat_id,text=rm,parse_mode="Markdown",reply_markup=kb)
         sess["mode"]="chat"; return
     text=build_reading_msg(article,q_idx)
-    if edit and hasattr(upd_or_q,"edit_message_text"): await upd_or_q.edit_message_text(text,parse_mode="Markdown",reply_markup=tfng_keyboard())
-    else: await upd_or_q.message.reply_text(text,parse_mode="Markdown",reply_markup=tfng_keyboard())
+    chat_id=upd_or_q.message.chat_id if hasattr(upd_or_q,"message") else upd_or_q.effective_chat.id
+    await context.bot.send_message(chat_id=chat_id,text=text,parse_mode="Markdown",reply_markup=tfng_keyboard())
 
 def build_placement_msg(q_idx):
     q=PLACEMENT_TEST[q_idx]; total=len(PLACEMENT_TEST); opts="\n".join(q["options"])
@@ -604,7 +670,9 @@ async def button_callback(update,context):
         level=data.replace("skill_reading_",""); articles=READING_ARTICLES.get(level,READING_ARTICLES["elementary"])
         idx=random.randint(0,len(articles)-1)
         sess["article_index"]=idx; sess["article_level"]=level; sess["tfng_question_index"]=0; sess["tfng_score"]=0; sess["mode"]="tfng"
-        await send_reading_question(query,context,uid)
+        article=articles[idx]; text=build_reading_msg(article,0)
+        await query.edit_message_text("Loading your article... 📖")
+        await context.bot.send_message(chat_id=query.message.chat_id,text=text,parse_mode="Markdown",reply_markup=tfng_keyboard())
     elif data.startswith("tfng_"):
         if sess.get("mode")!="tfng":
             await query.answer("No active reading session!",show_alert=True); return
@@ -622,10 +690,41 @@ async def button_callback(update,context):
         nl=f"Next Question ({next_idx+1}/{total}) ➡️" if next_idx<total else "See Results 🏆"
         await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
     elif data=="tfng_next":
-        # Send as new message so article text is always fully visible
-        await context.bot.send_message(uid, "Next question coming up... 👇")
-        await send_reading_question(query,context,uid,edit=False)
-    elif data.startswith("skill_writing_"):
+        level=sess.get("article_level","elementary")
+        art_idx=sess.get("article_index",0)
+        q_idx=sess.get("tfng_question_index",0)
+        articles=READING_ARTICLES.get(level,READING_ARTICLES["elementary"])
+        article=articles[art_idx]; qs=article["questions"]
+        if q_idx>=len(qs):
+            score=sess.get("tfng_score",0); total=len(qs); pct=int(score/total*100)
+            rm=(f"🎉 *Reading complete!*\n\nYour score: {score}/{total} ({pct}%)\n\n"
+                f"{'Excellent work! 🏆' if pct>=80 else 'Good effort! Keep practicing 💪' if pct>=60 else 'Keep reading and you will improve! 😊'}")
+            kb=InlineKeyboardMarkup([[InlineKeyboardButton("New Article",callback_data=f"skill_reading_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
+            await context.bot.send_message(chat_id=query.message.chat_id,text=rm,parse_mode="Markdown",reply_markup=kb)
+            sess["mode"]="chat"
+        else:
+            text=build_reading_msg(article,q_idx)
+            await context.bot.send_message(chat_id=query.message.chat_id,text=text,parse_mode="Markdown",reply_markup=tfng_keyboard())
+    elif data.startswith("talk_level_"):
+        level=data.replace("talk_level_",""); sess["talk_level"]=level; sess["talk_q_index"]=0
+        ld=level.replace("_"," ").title()
+        await query.edit_message_text(
+            f"Great choice! 🎤 *{ld}* level selected.\n\nI'll ask you 10 speaking questions one by one. After each answer, I'll give you feedback and move to the next question.\n\nAre you ready?",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("I'm Ready! 🚀",callback_data="talk_start")],[InlineKeyboardButton("Back",callback_data="talk_menu")]]))
+    elif data=="talk_menu":
+        await query.edit_message_text("Choose your level for speaking practice! 🎤",reply_markup=talk_levels_keyboard())
+    elif data=="talk_start":
+        level=sess.get("talk_level","elementary"); sess["mode"]="speaking"; sess["talk_q_index"]=0
+        questions=SPEAKING_QUESTIONS.get(level,[])
+        q=questions[0]
+        await query.edit_message_text(
+            f"🎤 *Question 1/10:*\n\n{q}\n\nSend me a voice message with your answer!",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("End Session",callback_data="talk_end")]]))
+    elif data=="talk_end":
+        sess["mode"]="chat"
+        await query.edit_message_text("Great session! Come back anytime to practice more. 😊",reply_markup=main_reply_keyboard())
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Lightly",callback_data="write_light"),InlineKeyboardButton("Professionally (IELTS)",callback_data="write_pro")],[InlineKeyboardButton("Back",callback_data="skills_back")]]))
@@ -668,22 +767,66 @@ async def button_callback(update,context):
 async def handle_voice(update,context):
     if not await require_membership(update,context): return
     uid=update.effective_user.id; uname=update.effective_user.first_name or "Student"
+    sess=get_session(uid); mode=sess.get("mode","chat")
     await context.bot.send_chat_action(update.effective_chat.id,action="typing")
     try:
+        # Download and transcribe
         file=await context.bot.get_file(update.message.voice.file_id)
-        fb=await file.download_as_bytearray()
-        transcript=await transcribe_voice(bytes(fb))
-        if not transcript.strip():
-            await update.message.reply_text("Hmm, I couldn't hear that clearly! Try again in a quieter place 😊"); return
+        file_bytes=await file.download_as_bytearray()
+        import io
+        f=io.BytesIO(bytes(file_bytes)); f.name="audio.ogg"
+        t=openai_client.audio.transcriptions.create(model="whisper-1",file=f,language="en")
+        transcript=t.text.strip()
+        if not transcript:
+            await update.message.reply_text("Hmm, I couldn't hear that clearly! Please try again in a quieter place 😊"); return
         inc_progress(uid,uname,"voice_messages")
-        VS="""You are a friendly English speaking coach. Give warm concise feedback:
-You said: "[transcript]"
+
+        if mode=="speaking":
+            # Speaking practice mode
+            level=sess.get("talk_level","elementary")
+            q_idx=sess.get("talk_q_index",0)
+            questions=SPEAKING_QUESTIONS.get(level,[])
+            current_q=questions[q_idx] if q_idx<len(questions) else ""
+            next_idx=q_idx+1
+            sess["talk_q_index"]=next_idx
+
+            # Get feedback from Claude
+            SPEAK_SYS=f"""You are Safiya, a friendly English speaking coach. A student answered a speaking question.
+Question asked: "{current_q}"
+Student said: "{transcript}"
+Level: {level}
+
+Give SHORT warm feedback (3-4 lines max):
+1. What they said (brief)
+2. One strength
+3. One improvement
+4. Score out of 10
+
+Be encouraging and specific. Keep it concise."""
+            feedback=ask_claude(uid,f'Question: "{current_q}"\nStudent answer: "{transcript}"',system=SPEAK_SYS,max_tokens=300)
+
+            if next_idx>=10 or next_idx>=len(questions):
+                # Session complete
+                await update.message.reply_text(
+                    f"{feedback}\n\n🎉 *Amazing! You completed all 10 questions!*\n\nYour speaking is improving with every practice. Take a rest and come back tomorrow for another session! 😊",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Practice Again",callback_data=f"talk_level_{level}")],[InlineKeyboardButton("Main Menu",callback_data="close_menu")]]))
+                sess["mode"]="chat"
+            else:
+                next_q=questions[next_idx]
+                await update.message.reply_text(
+                    f"{feedback}\n\n━━━━━━━━━━━━━━━━━━━━\n🎤 *Question {next_idx+1}/10:*\n\n{next_q}\n\nSend me your voice answer!",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("End Session",callback_data="talk_end")]]))
+        else:
+            # General voice feedback
+            VOICE_SYS="""You are a friendly English speaking coach. Give warm concise feedback:
 Strengths: [one positive]
 Improve: [one gentle suggestion]
 Better version: "[corrected if needed]"
 Tip: [one practical tip]"""
-        reply=ask_claude(uid,f'Student said: "{transcript}"\nGive feedback.',system=VS)
-        await update.message.reply_text(reply)
+            reply=ask_claude(uid,f'Student said: "{transcript}"\nGive feedback.',system=VOICE_SYS,max_tokens=300)
+            await update.message.reply_text(reply)
     except Exception as e:
         logger.error(f"Voice error: {e}")
         await update.message.reply_text("Something went wrong with the voice message — please try again!")
@@ -703,6 +846,9 @@ async def handle_message(update,context):
     if text=="Skills":
         if not await require_membership(update,context): return
         await update.message.reply_text("Choose your level! 🎯",reply_markup=skills_levels_keyboard()); return
+    if text=="Talk to Safiya":
+        if not await require_membership(update,context): return
+        await update.message.reply_text("Choose your speaking level! 🎤",reply_markup=talk_levels_keyboard()); return
     if text=="Complaints & Offers":
         if not await require_membership(update,context): return
         await update.message.reply_text("Have a complaint or suggestion? Reach us directly here 👇",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Contact @umrbektp",url=ADMIN_URL)]])); return
