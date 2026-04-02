@@ -588,14 +588,15 @@ async def button_callback(update,context):
         await query.edit_message_text("📋 *Placement Test*\n\nThis test has 30 questions to find your English level.\n\n• Choose the best answer for each question\n• One correct answer per question\n• Your result shows your level and class recommendation\n\nGood luck! 🍀",parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start ▶️",callback_data="placement_next")]]))
     elif data=="placement_next":
-        await send_placement_question(query,context,uid)
+        await send_placement_question(query,context,uid,edit=False)
     elif data.startswith("pt_"):
-        if sess.get("mode")!="placement":
+        chosen=data.replace("pt_",""); q_idx=sess.get("placement_index",0)
+        if q_idx is None or sess.get("mode")!="placement":
             await query.answer("No active placement test!",show_alert=True); return
-        chosen=data.replace("pt_",""); q_idx=sess.get("placement_index",0); q=PLACEMENT_TEST[q_idx]
+        q=PLACEMENT_TEST[q_idx]
         if chosen==q["answer"]: sess["placement_score"]=sess.get("placement_score",0)+1
         sess["placement_index"]=q_idx+1
-        await send_placement_question(query,context,uid)
+        await send_placement_question(query,context,uid,edit=False)
     elif data.startswith("skill_level_"):
         level=data.replace("skill_level_",""); sess["skills_level"]=level; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Great! You selected *{ld}* 🎯\n\nWhat would you like to practice?",parse_mode="Markdown",reply_markup=skills_menu_keyboard(level))
@@ -621,7 +622,9 @@ async def button_callback(update,context):
         nl=f"Next Question ({next_idx+1}/{total}) ➡️" if next_idx<total else "See Results 🏆"
         await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
     elif data=="tfng_next":
-        await send_reading_question(query,context,uid)
+        # Send as new message so article text is always fully visible
+        await context.bot.send_message(uid, "Next question coming up... 👇")
+        await send_reading_question(query,context,uid,edit=False)
     elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
