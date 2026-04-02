@@ -623,8 +623,8 @@ async def button_callback(update,context):
         await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
     elif data=="tfng_next":
         # Send as new message so article text is always fully visible
-        await send_reading_question(query,context,uid,edit=False)
-        await send_reading_question(query,context,uid,edit=False)
+        await send_reading_question(query.message,context,uid,edit=False)
+        await send_reading_question(query.message,context,uid,edit=False)
     elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
