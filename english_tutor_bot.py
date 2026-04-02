@@ -621,24 +621,10 @@ async def button_callback(update,context):
             ft=f"❌ *Incorrect!* The answer is *{ad}*.\n\n{q['explanation']}"
         nl=f"Next Question ({next_idx+1}/{total}) ➡️" if next_idx<total else "See Results 🏆"
         await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
-   elif data=="tfng_next":
-        sess=get_session(uid)
-        level=sess.get("article_level","elementary")
-        art_idx=sess.get("article_index",0)
-        q_idx=sess.get("tfng_question_index",0)
-        articles=READING_ARTICLES.get(level,READING_ARTICLES["elementary"])
-        article=articles[art_idx]
-        qs=article["questions"]
-        if q_idx>=len(qs):
-            score=sess.get("tfng_score",0); total=len(qs); pct=int(score/total*100)
-            rm=(f"🎉 *Reading complete!*\n\nYour score: {score}/{total} ({pct}%)\n\n"
-                f"{'Excellent work! 🏆' if pct>=80 else 'Good effort! Keep practicing 💪' if pct>=60 else 'Keep reading and you will improve! 😊'}")
-            kb=InlineKeyboardMarkup([[InlineKeyboardButton("New Article",callback_data=f"skill_reading_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
-            await context.bot.send_message(uid,rm,parse_mode="Markdown",reply_markup=kb)
-            sess["mode"]="chat"
-        else:
-            text=build_reading_msg(article,q_idx)
-            await context.bot.send_message(uid,text,parse_mode="Markdown",reply_markup=tfng_keyboard())
+    elif data=="tfng_next":
+        # Send as new message so article text is always fully visible
+        await context.bot.send_message(uid, "Next question coming up... 👇")
+        await send_reading_question(query,context,uid,edit=False)
     elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
