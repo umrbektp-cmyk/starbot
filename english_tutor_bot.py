@@ -18,16 +18,155 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 TELEGRAM_TOKEN    = os.environ.get("TELEGRAM_TOKEN","YOUR_TOKEN")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY","YOUR_KEY")
 OPENAI_API_KEY    = os.environ.get("OPENAI_API_KEY","YOUR_KEY")
+DATABASE_URL      = os.environ.get("DATABASE_URL","")
 CHANNEL_USERNAME  = "@UmrbekTeacher"
 CHANNEL_URL       = "https://t.me/UmrbekTeacher"
 ADMIN_URL         = "https://t.me/umrbektp"
-USERS_FILE        = "users.json"
-PROGRESS_FILE     = "progress.json"
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# ─── Database Setup ────────────────────────────────────────────────────────────
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+def get_db():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
+
+def init_db():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    uid TEXT PRIMARY KEY,
+                    name TEXT,
+                    joined TEXT,
+                    messages INTEGER DEFAULT 0,
+                    weak_areas TEXT DEFAULT '[]'
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS progress (
+                    uid TEXT PRIMARY KEY,
+                    name TEXT,
+                    score INTEGER DEFAULT 0,
+                    total INTEGER DEFAULT 0,
+                    streak INTEGER DEFAULT 0,
+                    last_date TEXT DEFAULT '',
+                    joined TEXT,
+                    voice_messages INTEGER DEFAULT 0,
+                    essays_checked INTEGER DEFAULT 0,
+                    ielts_checks INTEGER DEFAULT 0,
+                    puzzles_solved INTEGER DEFAULT 0,
+                    articles_read INTEGER DEFAULT 0,
+                    daily TEXT DEFAULT '{}'
+                )
+            """)
+        conn.commit()
+
+def get_user(uid, name=""):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row:
+                today = datetime.now().strftime("%Y-%m-%d")
+                cur.execute("INSERT INTO users (uid,name,joined,messages,weak_areas) VALUES (%s,%s,%s,%s,%s)",
+                    (k, name, today, 0, "[]"))
+                conn.commit()
+                return {"name":name,"joined":today,"messages":0,"weak_areas":[]}
+            row = dict(row)
+            row["weak_areas"] = json.loads(row.get("weak_areas","[]"))
+            return row
+
+def update_user(uid, **kw):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            for field, val in kw.items():
+                if field == "weak_areas":
+                    val = json.dumps(val)
+                cur.execute(f"UPDATE users SET {field}=%s WHERE uid=%s", (val, k))
+        conn.commit()
+
+def inc_messages(uid):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET messages=messages+1 WHERE uid=%s", (k,))
+        conn.commit()
+
+def get_all_users():
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT uid, name FROM users")
+            return cur.fetchall()
+
+def get_progress(uid):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM progress WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row: return None
+            row = dict(row)
+            row["daily"] = json.loads(row.get("daily","{}"))
+            return row
+
+def inc_progress(uid, name, field):
+    k = str(uid)
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT uid FROM progress WHERE uid=%s", (k,))
+            if not cur.fetchone():
+                cur.execute("""INSERT INTO progress (uid,name,score,total,streak,last_date,joined,
+                    voice_messages,essays_checked,ielts_checks,puzzles_solved,articles_read,daily)
+                    VALUES (%s,%s,0,0,0,'',''  ,0,0,0,0,0,'{}')""", (k, name))
+            cur.execute(f"UPDATE progress SET {field}={field}+1, name=%s WHERE uid=%s", (name, k))
+        conn.commit()
+
+def update_quiz_progress(uid, name, correct, cat=""):
+    k = str(uid)
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM progress WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row:
+                cur.execute("""INSERT INTO progress (uid,name,score,total,streak,last_date,joined,
+                    voice_messages,essays_checked,ielts_checks,puzzles_solved,articles_read,daily)
+                    VALUES (%s,%s,0,0,0,%s,%s,0,0,0,0,0,'{}')""", (k, name, today, today))
+                cur.execute("SELECT * FROM progress WHERE uid=%s", (k,))
+                row = cur.fetchone()
+            row = dict(row)
+            daily = json.loads(row.get("daily","{}"))
+            score = row["score"] + (1 if correct else 0)
+            total = row["total"] + 1
+            if today not in daily: daily[today] = {"score":0,"total":0}
+            daily[today]["total"] += 1
+            if correct: daily[today]["score"] += 1
+            last = row.get("last_date","")
+            streak = row.get("streak",0)
+            if last != today:
+                try:
+                    diff = (datetime.strptime(today,"%Y-%m-%d")-datetime.strptime(last,"%Y-%m-%d")).days if last else 0
+                    streak = streak+1 if diff==1 else 1
+                except: streak = 1
+            cur.execute("""UPDATE progress SET score=%s,total=%s,streak=%s,last_date=%s,daily=%s,name=%s
+                WHERE uid=%s""", (score, total, streak, today, json.dumps(daily), name, k))
+            if cat and not correct:
+                cur.execute("SELECT weak_areas FROM users WHERE uid=%s", (k,))
+                urow = cur.fetchone()
+                if urow:
+                    weak = json.loads(urow["weak_areas"] or "[]")
+                    if cat not in weak:
+                        weak.append(cat)
+                        cur.execute("UPDATE users SET weak_areas=%s WHERE uid=%s", (json.dumps(weak), k))
+        conn.commit()
 
 async def check_membership(user_id, context):
     try:
@@ -41,56 +180,6 @@ async def require_membership(update, context):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Join",url=CHANNEL_URL)],[InlineKeyboardButton("I Joined",callback_data="check_join")]]))
         return False
     return True
-
-def load_json(p):
-    if os.path.exists(p):
-        try:
-            with open(p,"r",encoding="utf-8") as f: return json.load(f)
-        except: pass
-    return {}
-
-def save_json(p,d):
-    with open(p,"w",encoding="utf-8") as f: json.dump(d,f,indent=2,ensure_ascii=False)
-
-user_db = load_json(USERS_FILE)
-student_progress = load_json(PROGRESS_FILE)
-
-def get_user(uid,name=""):
-    k=str(uid)
-    if k not in user_db:
-        user_db[k]={"name":name,"joined":datetime.now().strftime("%Y-%m-%d"),"messages":0,"weak_areas":[]}
-        save_json(USERS_FILE,user_db)
-    return user_db[k]
-
-def inc_progress(uid,name,field):
-    k=str(uid); today=datetime.now().strftime("%Y-%m-%d")
-    if k not in student_progress:
-        student_progress[k]={"name":name,"score":0,"total":0,"streak":0,"last_date":"","joined":today,"voice_messages":0,"essays_checked":0,"ielts_checks":0,"puzzles_solved":0,"articles_read":0,"daily":{}}
-    student_progress[k]["name"]=name
-    student_progress[k][field]=student_progress[k].get(field,0)+1
-    save_json(PROGRESS_FILE,student_progress)
-
-def update_quiz_progress(uid,name,correct,cat=""):
-    k=str(uid); today=datetime.now().strftime("%Y-%m-%d")
-    if k not in student_progress:
-        student_progress[k]={"name":name,"score":0,"total":0,"streak":0,"last_date":"","joined":today,"voice_messages":0,"essays_checked":0,"ielts_checks":0,"puzzles_solved":0,"articles_read":0,"daily":{}}
-    p=student_progress[k]; p["name"]=name; p["total"]+=1
-    if correct: p["score"]+=1
-    if today not in p["daily"]: p["daily"][today]={"score":0,"total":0}
-    p["daily"][today]["total"]+=1
-    if correct: p["daily"][today]["score"]+=1
-    last=p.get("last_date","")
-    if last!=today:
-        try:
-            diff=(datetime.strptime(today,"%Y-%m-%d")-datetime.strptime(last,"%Y-%m-%d")).days if last else 0
-            p["streak"]=p.get("streak",0)+1 if diff==1 else 1
-        except: p["streak"]=1
-    p["last_date"]=today
-    if cat and not correct:
-        u=user_db.get(k,{}); w=u.get("weak_areas",[])
-        if cat not in w:
-            w.append(cat); user_db[k]["weak_areas"]=w; save_json(USERS_FILE,user_db)
-    save_json(PROGRESS_FILE,student_progress)
 
 PLACEMENT_TEST=[
     {"q":"___ you interested in sport?","options":["A) Be","B) Am","C) Is","D) Are"],"answer":"D"},
@@ -394,16 +483,18 @@ def get_session(uid):
     return user_sessions[uid]
 
 def ask_claude(uid,msg,system=None,max_tokens=500):
-    sess=get_session(uid); u=user_db.get(str(uid),{}); name=u.get("name","")
+    sess=get_session(uid)
+    u=get_user(uid)
+    name=u.get("name","")
     sp=system or SAFIYA_SYSTEM
     if not system and name: sp+=f"\n\nUser's name: {name}"
     sess["history"].append({"role":"user","content":msg})
     history=sess["history"][-14:]
     r=claude_client.messages.create(model="claude-sonnet-4-20250514",max_tokens=max_tokens,system=sp,messages=history)
-    reply=r.content[0].text; sess["history"].append({"role":"assistant","content":reply})
-    k=str(uid)
-    if k in user_db:
-        user_db[k]["messages"]=user_db[k].get("messages",0)+1; save_json(USERS_FILE,user_db)
+    reply=r.content[0].text
+    sess["history"].append({"role":"assistant","content":reply})
+    try: inc_messages(uid)
+    except: pass
     return reply
 
 async def transcribe_voice(file_bytes):
@@ -908,15 +999,17 @@ ADMIN_ID=960055324
 async def stats_command(update,context):
     if update.effective_user.id!=ADMIN_ID:
         await update.message.reply_text("You are not authorized."); return
-    total=len(user_db)
-    today=datetime.now().strftime("%Y-%m-%d")
-    new_today=sum(1 for u in user_db.values() if u.get("joined","")==today)
-    essays=sum(p.get("essays_checked",0) for p in student_progress.values())
-    ielts=sum(p.get("ielts_checks",0) for p in student_progress.values())
-    quizzes=sum(p.get("total",0) for p in student_progress.values())
-    voice=sum(p.get("voice_messages",0) for p in student_progress.values())
-    articles=sum(p.get("articles_read",0) for p in student_progress.values())
-    puzzles=sum(p.get("puzzles_solved",0) for p in student_progress.values())
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM users"); total=cur.fetchone()[0]
+            today=datetime.now().strftime("%Y-%m-%d")
+            cur.execute("SELECT COUNT(*) FROM users WHERE joined=%s",(today,)); new_today=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(essays_checked),0) FROM progress"); essays=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(ielts_checks),0) FROM progress"); ielts=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(total),0) FROM progress"); quizzes=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(voice_messages),0) FROM progress"); voice=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(articles_read),0) FROM progress"); articles=cur.fetchone()[0]
+            cur.execute("SELECT COALESCE(SUM(puzzles_solved),0) FROM progress"); puzzles=cur.fetchone()[0]
     await update.message.reply_text(
         f"📊 Bot Statistics\n\n"
         f"👥 Total users: {total}\n"
@@ -936,10 +1029,11 @@ async def broadcast_command(update,context):
     if not msg:
         await update.message.reply_text("Usage: /broadcast your message here"); return
     import asyncio
+    users=get_all_users()
     sent=0; failed=0
-    for uid in list(user_db.keys()):
+    for row in users:
         try:
-            await context.bot.send_message(chat_id=int(uid),text=msg)
+            await context.bot.send_message(chat_id=int(row["uid"]),text=msg)
             sent+=1
             await asyncio.sleep(0.05)
         except: failed+=1
@@ -947,6 +1041,8 @@ async def broadcast_command(update,context):
 
 def main():
     print("Starting Safiya Bot...")
+    init_db()
+    print("Database initialized!")
     app=Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start",start))
     app.add_handler(CommandHandler("help",help_command))
