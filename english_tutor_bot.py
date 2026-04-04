@@ -725,9 +725,9 @@ async def button_callback(update,context):
     elif data=="talk_end":
         sess["mode"]="chat"
         await query.edit_message_text("Great session! Come back anytime to practice more. 😊",reply_markup=main_reply_keyboard())
+       elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
-        await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Lightly",callback_data="write_light"),InlineKeyboardButton("Professionally (IELTS)",callback_data="write_pro")],[InlineKeyboardButton("Back",callback_data="skills_back")]]))
+        await query.edit_message_text(f"Writing Check — {ld}\n\nShould I check it lightly or professionally?",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Lightly",callback_data="write_light"),InlineKeyboardButton("Professionally (IELTS)",callback_data="write_pro")],[InlineKeyboardButton("Back",callback_data="skills_back")]]))
     elif data=="mode_quiz": await send_quiz(query,context,uid)
     elif data=="mode_puzzle": await send_puzzle(query,context,uid)
     elif data=="write_light":
