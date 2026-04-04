@@ -935,11 +935,13 @@ async def broadcast_command(update,context):
     msg=" ".join(context.args)
     if not msg:
         await update.message.reply_text("Usage: /broadcast your message here"); return
+    import asyncio
     sent=0; failed=0
-    for uid in user_db.keys():
+    for uid in list(user_db.keys()):
         try:
             await context.bot.send_message(chat_id=int(uid),text=msg)
             sent+=1
+            await asyncio.sleep(0.05)
         except: failed+=1
     await update.message.reply_text(f"Broadcast done!\n\nSent: {sent}\nFailed: {failed}")
 
