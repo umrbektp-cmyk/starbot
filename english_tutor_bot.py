@@ -705,12 +705,8 @@ async def button_callback(update,context):
         else:
             ad=q["answer"].replace("_"," ").title()
             ft=f"❌ *Incorrect!* The answer is *{ad}*.\n\n{q['explanation']}"
-       if next_idx<total:
-            next_text=build_reading_msg(article,next_idx)
-            await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(f"Next Question ({next_idx+1}/{total}) ➡️",callback_data="tfng_next")]]))
-            await context.bot.send_message(chat_id=query.message.chat_id,text=next_text,parse_mode="Markdown",reply_markup=tfng_keyboard())
-        else:
-            await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("See Results 🏆",callback_data="tfng_next")]]))
+        nl=f"Next Question ({next_idx+1}/{total}) ➡️" if next_idx<total else "See Results 🏆"
+        await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
     elif data=="tfng_next":
         level=sess.get("article_level","elementary")
         art_idx=sess.get("article_index",0)
