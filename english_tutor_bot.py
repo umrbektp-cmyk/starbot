@@ -407,13 +407,9 @@ def ask_claude(uid,msg,system=None,max_tokens=500):
     return reply
 
 async def transcribe_voice(file_bytes):
-    import io, tempfile, os
-    with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
-        tmp.write(file_bytes)
-        tmp_path=tmp.name
-    with open(tmp_path,"rb") as f:
-        t=openai_client.audio.transcriptions.create(model="whisper-1",file=f)
-    os.unlink(tmp_path)
+    import io
+    f=io.BytesIO(file_bytes); f.name="audio.ogg"
+    t=openai_client.audio.transcriptions.create(model="whisper-1",file=f,language="en")
     return t.text
 
 QUIZ_QUESTIONS=[
