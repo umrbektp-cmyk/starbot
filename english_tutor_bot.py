@@ -33,7 +33,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
+    return psycopg2.connect(DATABASE_URL)
 
 def init_db():
     with get_db() as conn:
