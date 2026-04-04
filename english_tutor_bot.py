@@ -654,15 +654,33 @@ async def button_callback(update,context):
         await query.edit_message_text("📋 *Placement Test*\n\nThis test has 30 questions to find your English level.\n\n• Choose the best answer for each question\n• One correct answer per question\n• Your result shows your level and class recommendation\n\nGood luck! 🍀",parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start ▶️",callback_data="placement_next")]]))
     elif data=="placement_next":
-        await send_placement_question(query,context,uid,edit=False)
+        q_idx=sess.get("placement_index",0)
+        if q_idx>=len(PLACEMENT_TEST):
+            score=sess.get("placement_score",0); level,desc=get_placement_level(score)
+            result=f"🎓 Placement Test Complete!\n\nYour score: {score}/{len(PLACEMENT_TEST)}\n\nYour level: {level}\n\n{desc}\n\nContact us at {ADMIN_URL} to enroll!"
+            await query.edit_message_text(result,reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Take Again",callback_data="placement_start")],[InlineKeyboardButton("Back",callback_data="safiya_menu")]]))
+            sess["mode"]="chat"
+        else:
+            q=PLACEMENT_TEST[q_idx]; opts="\n".join(q["options"])
+            text=f"📋 Question {q_idx+1}/{len(PLACEMENT_TEST)}\n\n{q['q']}\n\n{opts}"
+            await query.edit_message_text(text,reply_markup=placement_keyboard())
     elif data.startswith("pt_"):
         chosen=data.replace("pt_",""); q_idx=sess.get("placement_index",0)
-        if q_idx is None or sess.get("mode")!="placement":
-            await query.answer("No active placement test!",show_alert=True); return
+        if sess.get("mode")!="placement":
+            sess["mode"]="placement"
         q=PLACEMENT_TEST[q_idx]
         if chosen==q["answer"]: sess["placement_score"]=sess.get("placement_score",0)+1
         sess["placement_index"]=q_idx+1
-        await send_placement_question(query,context,uid,edit=False)
+        next_idx=sess["placement_index"]
+        if next_idx>=len(PLACEMENT_TEST):
+            score=sess.get("placement_score",0); level,desc=get_placement_level(score)
+            result=f"🎓 Placement Test Complete!\n\nYour score: {score}/{len(PLACEMENT_TEST)}\n\nYour level: {level}\n\n{desc}\n\nContact us at {ADMIN_URL} to enroll!"
+            await query.edit_message_text(result,reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Take Again",callback_data="placement_start")],[InlineKeyboardButton("Back",callback_data="safiya_menu")]]))
+            sess["mode"]="chat"
+        else:
+            q=PLACEMENT_TEST[next_idx]; opts="\n".join(q["options"])
+            text=f"📋 Question {next_idx+1}/{len(PLACEMENT_TEST)}\n\n{q['q']}\n\n{opts}"
+            await query.edit_message_text(text,reply_markup=placement_keyboard())
     elif data.startswith("skill_level_"):
         level=data.replace("skill_level_",""); sess["skills_level"]=level; ld=level.replace("_"," ").title()
         await query.edit_message_text(f"Great! You selected *{ld}* 🎯\n\nWhat would you like to practice?",parse_mode="Markdown",reply_markup=skills_menu_keyboard(level))
@@ -724,9 +742,10 @@ async def button_callback(update,context):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("End Session",callback_data="talk_end")]]))
     elif data=="talk_end":
         sess["mode"]="chat"
-        await query.edit_message_text("Great session! Come back anytime to practice more. 😊",reply_markup=main_reply_keyboard())
+        await query.edit_message_text("Great session! Come back anytime to practice more. 😊")
+    elif data.startswith("skill_writing_"):
         level=data.replace("skill_writing_",""); sess["skills_level"]=level; sess["mode"]="writing_ask"; ld=level.replace("_"," ").title()
-        await query.edit_message_text(f"Writing Check — *{ld}*\n\nShould I check it lightly or professionally?",parse_mode="Markdown",
+        await query.edit_message_text(f"Writing Check — {ld}\n\nShould I check it lightly or professionally?",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Lightly",callback_data="write_light"),InlineKeyboardButton("Professionally (IELTS)",callback_data="write_pro")],[InlineKeyboardButton("Back",callback_data="skills_back")]]))
     elif data=="mode_quiz": await send_quiz(query,context,uid)
     elif data=="mode_puzzle": await send_puzzle(query,context,uid)
@@ -884,6 +903,46 @@ async def puzzle_command(u,c):
     if not await require_membership(u,c): return
     get_session(u.effective_user.id)["mode"]="puzzle"; await send_puzzle(u,c,u.effective_user.id)
 
+ADMIN_ID=960055324
+
+async def stats_command(update,context):
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    total=len(user_db)
+    today=datetime.now().strftime("%Y-%m-%d")
+    new_today=sum(1 for u in user_db.values() if u.get("joined","")==today)
+    essays=sum(p.get("essays_checked",0) for p in student_progress.values())
+    ielts=sum(p.get("ielts_checks",0) for p in student_progress.values())
+    quizzes=sum(p.get("total",0) for p in student_progress.values())
+    voice=sum(p.get("voice_messages",0) for p in student_progress.values())
+    articles=sum(p.get("articles_read",0) for p in student_progress.values())
+    puzzles=sum(p.get("puzzles_solved",0) for p in student_progress.values())
+    await update.message.reply_text(
+        f"📊 Bot Statistics\n\n"
+        f"👥 Total users: {total}\n"
+        f"🆕 New today: {new_today}\n"
+        f"✍️ Essays checked: {essays}\n"
+        f"📋 IELTS checks: {ielts}\n"
+        f"🎯 Quiz questions: {quizzes}\n"
+        f"🎤 Voice messages: {voice}\n"
+        f"📖 Articles read: {articles}\n"
+        f"🧩 Puzzles solved: {puzzles}"
+    )
+
+async def broadcast_command(update,context):
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    msg=" ".join(context.args)
+    if not msg:
+        await update.message.reply_text("Usage: /broadcast your message here"); return
+    sent=0; failed=0
+    for uid in user_db.keys():
+        try:
+            await context.bot.send_message(chat_id=int(uid),text=msg)
+            sent+=1
+        except: failed+=1
+    await update.message.reply_text(f"Broadcast done!\n\nSent: {sent}\nFailed: {failed}")
+
 def main():
     print("Starting Safiya Bot...")
     app=Application.builder().token(TELEGRAM_TOKEN).build()
@@ -892,6 +951,8 @@ def main():
     app.add_handler(CommandHandler("quiz",quiz_command))
     app.add_handler(CommandHandler("puzzle",puzzle_command))
     app.add_handler(CommandHandler("score",score_command))
+    app.add_handler(CommandHandler("stats",stats_command))
+    app.add_handler(CommandHandler("broadcast",broadcast_command))
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.VOICE,handle_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
