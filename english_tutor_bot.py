@@ -1200,6 +1200,8 @@ async def mypremium_command(update,context):
         await update.message.reply_text("🌟 You have Premium access! Enjoy unlimited features! 😊")
     else:
         await update.message.reply_text(f"You are on the Free plan.\n\nUpgrade to Premium for unlimited access:\n👉 @umrbektp")
+
+async def broadcast_command(update,context):
     if update.effective_user.id!=ADMIN_ID:
         await update.message.reply_text("You are not authorized."); return
     msg=" ".join(context.args)
@@ -1233,19 +1235,6 @@ def main():
     app.add_handler(CommandHandler("premiumlist",premiumlist_command))
     app.add_handler(CommandHandler("myid",myid_command))
     app.add_handler(CommandHandler("mypremium",mypremium_command))
-    app.add_handler(CallbackQueryHandler(button_callback))
-    app.add_handler(MessageHandler(filters.VOICE,handle_voice))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
-    print("Safiya is running!")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
-    app=Application.builder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start",start))
-    app.add_handler(CommandHandler("help",help_command))
-    app.add_handler(CommandHandler("quiz",quiz_command))
-    app.add_handler(CommandHandler("puzzle",puzzle_command))
-    app.add_handler(CommandHandler("score",score_command))
-    app.add_handler(CommandHandler("stats",stats_command))
-    app.add_handler(CommandHandler("broadcast",broadcast_command))
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.VOICE,handle_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
