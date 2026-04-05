@@ -44,7 +44,11 @@ def init_db():
                     name TEXT,
                     joined TEXT,
                     messages INTEGER DEFAULT 0,
-                    weak_areas TEXT DEFAULT '[]'
+                    weak_areas TEXT DEFAULT '[]',
+                    is_premium BOOLEAN DEFAULT FALSE,
+                    chat_count TEXT DEFAULT '{}',
+                    writing_count TEXT DEFAULT '{}',
+                    speaking_count TEXT DEFAULT '{}'
                 )
             """)
             cur.execute("""
@@ -64,6 +68,16 @@ def init_db():
                     daily TEXT DEFAULT '{}'
                 )
             """)
+            # Add missing columns if upgrading from old schema
+            for col, defn in [
+                ("is_premium","BOOLEAN DEFAULT FALSE"),
+                ("chat_count","TEXT DEFAULT '{}'"),
+                ("writing_count","TEXT DEFAULT '{}'"),
+                ("speaking_count","TEXT DEFAULT '{}'"),
+            ]:
+                try:
+                    cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {defn}")
+                except: pass
         conn.commit()
 
 def get_user(uid, name=""):
@@ -104,6 +118,66 @@ def get_all_users():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT uid, name FROM users")
             return cur.fetchall()
+
+def is_premium(uid):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT is_premium FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            return bool(row and row[0])
+
+def set_premium(uid, status=True):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET is_premium=%s WHERE uid=%s", (status, k))
+        conn.commit()
+
+def get_premium_users():
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT uid, name FROM users WHERE is_premium=TRUE")
+            return cur.fetchall()
+
+def get_daily_count(uid, field):
+    """Get today's usage count for a field (chat_count, writing_count, speaking_count)"""
+    k = str(uid)
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {field} FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row: return 0
+            data = json.loads(row[0] or "{}")
+            return data.get(today, 0)
+
+def inc_daily_count(uid, field):
+    """Increment today's usage count"""
+    k = str(uid)
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {field} FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row: return
+            data = json.loads(row[0] or "{}")
+            data[today] = data.get(today, 0) + 1
+            cur.execute(f"UPDATE users SET {field}=%s WHERE uid=%s", (json.dumps(data), k))
+        conn.commit()
+    return data[today]
+
+PREMIUM_MSG = (
+    "You've used all your free messages for today! 😊\n\n"
+    "🌟 Upgrade to Premium and get:\n"
+    "• Unlimited chat with Safiya\n"
+    "• Unlimited writing checks with PDF reports\n"
+    "• Unlimited speaking practice sessions\n"
+    "• Priority responses\n\n"
+    "💰 Contact us to upgrade:\n"
+    "👉 @umrbektp\n\n"
+    "Premium members get the full Safiya AI experience with no limits!"
+)
 
 def get_progress(uid):
     k = str(uid)
@@ -519,6 +593,26 @@ QUIZ_QUESTIONS=[
     {"q":"Which is an ADVERB?\n\na) Cat\nb) Happy\nc) Quickly\nd) Jump","a":"c","e":"Quickly is an adverb — describes HOW.","cat":"Adverbs"},
     {"q":"Correct sentence?\n\na) I has a cat.\nb) I have a cat.\nc) I haves a cat.\nd) I having a cat.","a":"b","e":"I have a cat — use have with I, you, we, they.","cat":"Verb Agreement"},
     {"q":"Synonym for big?\n\na) Small\nb) Tiny\nc) Large\nd) Short","a":"c","e":"Large is a synonym for big.","cat":"Vocabulary"},
+    {"q":"She ___ TV every evening.\n\na) watch\nb) watches\nc) watching\nd) watched","a":"b","e":"watches — third person singular present simple.","cat":"Verb Agreement"},
+    {"q":"Which is the correct past tense of 'go'?\n\na) Goed\nb) Gone\nc) Went\nd) Going","a":"c","e":"Went is the irregular past tense of go.","cat":"Verbs"},
+    {"q":"___ you ever been to London?\n\na) Did\nb) Have\nc) Has\nd) Do","a":"b","e":"Have you ever — present perfect tense.","cat":"Tenses"},
+    {"q":"She is ___ than her sister.\n\na) tall\nb) more tall\nc) taller\nd) tallest","a":"c","e":"Taller — comparative adjective for short adjectives add -er.","cat":"Adjectives"},
+    {"q":"Which word means the same as 'angry'?\n\na) Happy\nb) Furious\nc) Tired\nd) Bored","a":"b","e":"Furious is a synonym for angry.","cat":"Vocabulary"},
+    {"q":"I ___ my homework yesterday.\n\na) do\nb) does\nc) did\nd) done","a":"c","e":"Did — simple past tense.","cat":"Tenses"},
+    {"q":"Which is a CONJUNCTION?\n\na) Quickly\nb) Beautiful\nc) Because\nd) Table","a":"c","e":"Because is a conjunction — it connects two clauses.","cat":"Conjunctions"},
+    {"q":"The cat sat ___ the mat.\n\na) in\nb) on\nc) at\nd) by","a":"b","e":"On — we sit on a surface.","cat":"Prepositions"},
+    {"q":"Which sentence is correct?\n\na) He don't like coffee.\nb) He doesn't likes coffee.\nc) He doesn't like coffee.\nd) He not like coffee.","a":"c","e":"He doesn't like — negative with he/she/it uses doesn't.","cat":"Verb Agreement"},
+    {"q":"Opposite of 'ancient'?\n\na) Old\nb) Modern\nc) Huge\nd) Narrow","a":"b","e":"Modern is the antonym of ancient.","cat":"Vocabulary"},
+    {"q":"Which is spelled correctly?\n\na) Beutiful\nb) Beautiful\nc) Beautifull\nd) Beautifol","a":"b","e":"Beautiful — b-e-a-u-t-i-f-u-l.","cat":"Spelling"},
+    {"q":"We ___ to the cinema last night.\n\na) go\nb) goes\nc) went\nd) gone","a":"c","e":"Went — past tense of go.","cat":"Tenses"},
+    {"q":"Which word is a PREPOSITION?\n\na) Run\nb) Under\nc) Happy\nd) Slowly","a":"b","e":"Under is a preposition — shows position.","cat":"Prepositions"},
+    {"q":"She has ___ umbrella.\n\na) a\nb) an\nc) the\nd) some","a":"b","e":"An — umbrella starts with a vowel sound.","cat":"Articles"},
+    {"q":"Which is the superlative of 'good'?\n\na) Gooder\nb) Better\nc) Best\nd) Most good","a":"c","e":"Best — irregular superlative of good.","cat":"Adjectives"},
+    {"q":"I ___ English for 3 years.\n\na) study\nb) studied\nc) have studied\nd) am studying","a":"c","e":"Have studied — present perfect for a period up to now.","cat":"Tenses"},
+    {"q":"Which word does NOT belong?\n\na) Happy\nb) Sad\nc) Angry\nd) Run","a":"d","e":"Run is a verb. Happy, Sad, Angry are all adjectives.","cat":"Adjectives"},
+    {"q":"___ is your name?\n\na) Who\nb) Which\nc) What\nd) Where","a":"c","e":"What is your name — asking for a name.","cat":"Questions"},
+    {"q":"The plural of 'tooth' is?\n\na) Tooths\nb) Teeth\nc) Teethes\nd) Toothes","a":"b","e":"Teeth — irregular plural of tooth.","cat":"Plurals"},
+    {"q":"Which sentence uses the present continuous?\n\na) She reads books.\nb) She is reading a book.\nc) She read a book.\nd) She has read a book.","a":"b","e":"Is reading — present continuous = is/am/are + verb-ing.","cat":"Tenses"},
 ]
 
 PUZZLES=[
@@ -530,6 +624,18 @@ PUZZLES=[
     {"q":"Which does NOT belong?\n\na) Cat\nb) Dog\nc) Eagle\nd) Fish","answer":"c","e":"Eagle is a bird. Cat, Dog, Fish are common pets."},
     {"q":"'If I ___ rich, I would travel.'\n\na) am\nb) was\nc) were\nd) be","answer":"c","e":"Were — always used in conditional sentences."},
     {"q":"What does INEVITABLE mean?\n\na) Impossible\nb) Certain to happen\nc) Surprising\nd) Dangerous","answer":"b","e":"Inevitable means certain to happen."},
+    {"q":"What does ELOQUENT mean?\n\na) Quiet\nb) Fluent and expressive\nc) Confused\nd) Angry","answer":"b","e":"Eloquent means speaking clearly and expressively."},
+    {"q":"'By the time I arrived, she ___ left.'\n\na) has\nb) have\nc) had\nd) was","answer":"c","e":"Had left — past perfect tense for something that happened before another past event."},
+    {"q":"Which word means 'to make better'?\n\na) Worsen\nb) Improve\nc) Ignore\nd) Delay","answer":"b","e":"Improve means to make something better."},
+    {"q":"What does AMBIGUOUS mean?\n\na) Clear\nb) Having two meanings\nc) Very large\nd) Very small","answer":"b","e":"Ambiguous means having more than one possible meaning."},
+    {"q":"Which is the odd one out?\n\na) Violin\nb) Guitar\nc) Piano\nd) Trumpet","answer":"d","e":"Trumpet is a wind instrument. Violin, Guitar, Piano are string instruments."},
+    {"q":"'She ___ here since 2020.'\n\na) lives\nb) lived\nc) has lived\nd) is living","answer":"c","e":"Has lived — present perfect for an action that started in the past and continues now."},
+    {"q":"What does CONCISE mean?\n\na) Long and detailed\nb) Brief and clear\nc) Confusing\nd) Repetitive","answer":"b","e":"Concise means expressing things briefly and clearly."},
+    {"q":"Which word is a SYNONYM of 'begin'?\n\na) End\nb) Stop\nc) Start\nd) Pause","answer":"c","e":"Start is a synonym of begin."},
+    {"q":"'I wish I ___ fly.'\n\na) can\nb) could\nc) will\nd) would","answer":"b","e":"Could — use could after wish for present/future wishes."},
+    {"q":"What does TRANSPARENT mean?\n\na) Opaque\nb) Colorful\nc) See-through\nd) Heavy","answer":"c","e":"Transparent means you can see through it. Also means honest and open."},
+    {"q":"Which is correct?\n\na) I am agree\nb) I am agreed\nc) I agree\nd) I agreeing","answer":"c","e":"I agree — agree is not used with 'am/is/are'."},
+    {"q":"What does PERSEVERE mean?\n\na) Give up\nb) Continue despite difficulties\nc) Complain\nd) Celebrate","answer":"b","e":"Persevere means to keep going despite challenges."},
 ]
 
 def main_reply_keyboard():
@@ -779,9 +885,13 @@ async def button_callback(update,context):
         level=data.replace("skill_reading_",""); articles=READING_ARTICLES.get(level,READING_ARTICLES["elementary"])
         idx=random.randint(0,len(articles)-1)
         sess["article_index"]=idx; sess["article_level"]=level; sess["tfng_question_index"]=0; sess["tfng_score"]=0; sess["mode"]="tfng"
-        article=articles[idx]; text=build_reading_msg(article,0)
-        await query.edit_message_text("Loading your article... 📖")
-        await context.bot.send_message(chat_id=query.message.chat_id,text=text,parse_mode="Markdown",reply_markup=tfng_keyboard())
+        article=articles[idx]
+        await query.answer()
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=build_reading_msg(article,0),
+            parse_mode="Markdown",
+            reply_markup=tfng_keyboard())
     elif data.startswith("tfng_"):
         if sess.get("mode")!="tfng":
             await query.answer("No active reading session!",show_alert=True); return
@@ -792,28 +902,26 @@ async def button_callback(update,context):
         if correct: sess["tfng_score"]=sess.get("tfng_score",0)+1
         sess["tfng_question_index"]=q_idx+1
         total=len(qs); score=sess.get("tfng_score",0); next_idx=q_idx+1
-        if correct: ft=f"✅ *Correct!*\n\n{q['explanation']}"
+        if correct: ft=f"✅ Correct!\n\n{q['explanation']}"
         else:
             ad=q["answer"].replace("_"," ").title()
-            ft=f"❌ *Incorrect!* The answer is *{ad}*.\n\n{q['explanation']}"
-        nl=f"Next Question ({next_idx+1}/{total}) ➡️" if next_idx<total else "See Results 🏆"
-        await query.edit_message_text(ft,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(nl,callback_data="tfng_next")]]))
-    elif data=="tfng_next":
-        level=sess.get("article_level","elementary")
-        art_idx=sess.get("article_index",0)
-        q_idx=sess.get("tfng_question_index",0)
-        articles=READING_ARTICLES.get(level,READING_ARTICLES["elementary"])
-        article=articles[art_idx]; qs=article["questions"]
-        if q_idx>=len(qs):
-            score=sess.get("tfng_score",0); total=len(qs); pct=int(score/total*100)
-            rm=(f"🎉 *Reading complete!*\n\nYour score: {score}/{total} ({pct}%)\n\n"
-                f"{'Excellent work! 🏆' if pct>=80 else 'Good effort! Keep practicing 💪' if pct>=60 else 'Keep reading and you will improve! 😊'}")
-            kb=InlineKeyboardMarkup([[InlineKeyboardButton("New Article",callback_data=f"skill_reading_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
-            await context.bot.send_message(chat_id=query.message.chat_id,text=rm,parse_mode="Markdown",reply_markup=kb)
-            sess["mode"]="chat"
+            ft=f"❌ Incorrect! The answer is {ad}.\n\n{q['explanation']}"
+        # Send feedback first
+        await context.bot.send_message(chat_id=query.message.chat_id,text=ft)
+        # Then immediately send next question with full article
+        if next_idx<total:
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=build_reading_msg(article,next_idx),
+                parse_mode="Markdown",
+                reply_markup=tfng_keyboard())
         else:
-            text=build_reading_msg(article,q_idx)
-            await context.bot.send_message(chat_id=query.message.chat_id,text=text,parse_mode="Markdown",reply_markup=tfng_keyboard())
+            pct=int(score/total*100)
+            rm=(f"🎉 Reading complete!\n\nYour score: {score}/{total} ({pct}%)\n\n"
+                f"{'Excellent work! 🏆' if pct>=80 else 'Good effort! Keep practicing 💪' if pct>=60 else 'Keep reading — you will improve! 😊'}")
+            kb=InlineKeyboardMarkup([[InlineKeyboardButton("New Article",callback_data=f"skill_reading_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
+            await context.bot.send_message(chat_id=query.message.chat_id,text=rm,reply_markup=kb)
+            sess["mode"]="chat"
     elif data.startswith("talk_level_"):
         level=data.replace("talk_level_",""); sess["talk_level"]=level; sess["talk_q_index"]=0
         ld=level.replace("_"," ").title()
@@ -892,7 +1000,13 @@ async def handle_voice(update,context):
         inc_progress(uid,uname,"voice_messages")
 
         if mode=="speaking":
-            # Speaking practice mode
+            # Check speaking limit
+            if not is_premium(uid):
+                count=get_daily_count(uid,"speaking_count")
+                if count>=5:
+                    await update.message.reply_text(PREMIUM_MSG); return
+                inc_daily_count(uid,"speaking_count")
+
             level=sess.get("talk_level","elementary")
             q_idx=sess.get("talk_q_index",0)
             questions=SPEAKING_QUESTIONS.get(level,[])
@@ -900,20 +1014,20 @@ async def handle_voice(update,context):
             next_idx=q_idx+1
             sess["talk_q_index"]=next_idx
 
-            # Get feedback from Claude
             SPEAK_SYS=f"""You are Safiya, a friendly English speaking coach. A student answered a speaking question.
 Question asked: "{current_q}"
 Student said: "{transcript}"
 Level: {level}
 
-Give SHORT warm feedback (3-4 lines max):
-1. What they said (brief)
-2. One strength
-3. One improvement
-4. Score out of 10
+Give warm feedback in this format:
+What you said: [brief summary of their answer]
+Strength: [one positive point]
+Improve: [one specific suggestion]
+Ideal answer: [write an ideal model answer to the question in 2-3 sentences]
+Score: [X/10]
 
 Be encouraging and specific. Keep it concise."""
-            feedback=ask_claude(uid,f'Question: "{current_q}"\nStudent answer: "{transcript}"',system=SPEAK_SYS,max_tokens=300)
+            feedback=ask_claude(uid,f'Question: "{current_q}"\nStudent answer: "{transcript}"',system=SPEAK_SYS,max_tokens=350)
 
             if next_idx>=10 or next_idx>=len(questions):
                 # Session complete
@@ -979,12 +1093,28 @@ async def handle_message(update,context):
     if mode=="writing":
         if len(text)<30:
             await update.message.reply_text("Please send a longer text to analyze! 😊"); return
-        await process_writing(update,context,text,sess.get("writing_type","light"),sess.get("ielts_task","2")); return
+        # Check writing limit
+        if not is_premium(uid):
+            count=get_daily_count(uid,"writing_count")
+            if count>=1:
+                await update.message.reply_text(PREMIUM_MSG); return
+        await process_writing(update,context,text,sess.get("writing_type","light"),sess.get("ielts_task","2"))
+        if not is_premium(uid): inc_daily_count(uid,"writing_count")
+        return
+
+    # Check chat limit
+    if not is_premium(uid):
+        count=get_daily_count(uid,"chat_count")
+        if count>=10:
+            await update.message.reply_text(PREMIUM_MSG); return
+        if count==7:
+            await update.message.reply_text("⚠️ Just so you know — you have 3 free messages left for today! Upgrade to Premium for unlimited access: @umrbektp 😊")
 
     await context.bot.send_chat_action(update.effective_chat.id,action="typing")
     try: reply=ask_claude(uid,text)
     except Exception as e: logger.error(f"Claude error: {e}"); reply="Something went wrong — please try again! 😊"
     await update.message.reply_text(reply)
+    if not is_premium(uid): inc_daily_count(uid,"chat_count")
 
 async def quiz_command(u,c):
     if not await require_membership(u,c): return
@@ -1022,7 +1152,54 @@ async def stats_command(update,context):
         f"🧩 Puzzles solved: {puzzles}"
     )
 
-async def broadcast_command(update,context):
+async def addpremium_command(update,context):
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    if not context.args:
+        await update.message.reply_text("Usage: /addpremium [user_id]"); return
+    target=context.args[0]
+    try:
+        set_premium(target,True)
+        await update.message.reply_text(f"✅ User {target} is now Premium!")
+        try: await context.bot.send_message(chat_id=int(target),text="🌟 Congratulations! You now have Premium access to Safiya AI! Enjoy unlimited features! 😊")
+        except: pass
+    except Exception as e:
+        await update.message.reply_text(f"Error: {e}")
+
+async def removepremium_command(update,context):
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    if not context.args:
+        await update.message.reply_text("Usage: /removepremium [user_id]"); return
+    target=context.args[0]
+    try:
+        set_premium(target,False)
+        await update.message.reply_text(f"✅ Premium removed from user {target}.")
+    except Exception as e:
+        await update.message.reply_text(f"Error: {e}")
+
+async def premiumlist_command(update,context):
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    users=get_premium_users()
+    if not users:
+        await update.message.reply_text("No premium users yet."); return
+    msg="🌟 Premium Users:\n\n"
+    for u in users:
+        msg+=f"• {u['name'] or 'Unknown'} (ID: {u['uid']})\n"
+    await update.message.reply_text(msg)
+
+async def myid_command(update,context):
+    uid=update.effective_user.id
+    premium="🌟 Premium" if is_premium(uid) else "Free"
+    await update.message.reply_text(f"Your Telegram ID: {uid}\nStatus: {premium}")
+
+async def mypremium_command(update,context):
+    uid=update.effective_user.id
+    if is_premium(uid):
+        await update.message.reply_text("🌟 You have Premium access! Enjoy unlimited features! 😊")
+    else:
+        await update.message.reply_text(f"You are on the Free plan.\n\nUpgrade to Premium for unlimited access:\n👉 @umrbektp")
     if update.effective_user.id!=ADMIN_ID:
         await update.message.reply_text("You are not authorized."); return
     msg=" ".join(context.args)
@@ -1043,6 +1220,24 @@ def main():
     print("Starting Safiya Bot...")
     init_db()
     print("Database initialized!")
+    app=Application.builder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start",start))
+    app.add_handler(CommandHandler("help",help_command))
+    app.add_handler(CommandHandler("quiz",quiz_command))
+    app.add_handler(CommandHandler("puzzle",puzzle_command))
+    app.add_handler(CommandHandler("score",score_command))
+    app.add_handler(CommandHandler("stats",stats_command))
+    app.add_handler(CommandHandler("broadcast",broadcast_command))
+    app.add_handler(CommandHandler("addpremium",addpremium_command))
+    app.add_handler(CommandHandler("removepremium",removepremium_command))
+    app.add_handler(CommandHandler("premiumlist",premiumlist_command))
+    app.add_handler(CommandHandler("myid",myid_command))
+    app.add_handler(CommandHandler("mypremium",mypremium_command))
+    app.add_handler(CallbackQueryHandler(button_callback))
+    app.add_handler(MessageHandler(filters.VOICE,handle_voice))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
+    print("Safiya is running!")
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
     app=Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start",start))
     app.add_handler(CommandHandler("help",help_command))
