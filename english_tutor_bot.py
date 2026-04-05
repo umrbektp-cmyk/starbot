@@ -1044,12 +1044,12 @@ Be encouraging and specific. Keep it concise."""
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("End Session",callback_data="talk_end")]]))
         else:
-            # General voice feedback
-            VOICE_SYS="""You are a friendly English speaking coach. Give warm concise feedback:
-Strengths: [one positive]
-Improve: [one gentle suggestion]
-Better version: "[corrected if needed]"
-Tip: [one practical tip]"""
+            if not is_premium(uid):
+                count=get_daily_count(uid,"speaking_count")
+                if count>=5:
+                    await update.message.reply_text(PREMIUM_MSG); return
+                inc_daily_count(uid,"speaking_count")
+            VOICE_SYS="""You are a friendly English speaking coach. Give warm concise feedback:\nStrengths: [one positive]\nImprove: [one gentle suggestion]\nBetter version: [corrected if needed]\nTip: [one practical tip]"""
             reply=ask_claude(uid,f'Student said: "{transcript}"\nGive feedback.',system=VOICE_SYS,max_tokens=300)
             await update.message.reply_text(reply)
     except Exception as e:
