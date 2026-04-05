@@ -174,6 +174,7 @@ PREMIUM_MSG = (
     "• Unlimited writing checks with PDF reports\n"
     "• Unlimited speaking practice sessions\n"
     "• Priority responses\n\n"
+    "💎 Premium membership: only 28,000 so'm/month!\n\n"
     "💰 Contact us to upgrade:\n"
     "👉 @umrbektp\n\n"
     "Premium members get the full Safiya AI experience with no limits!"
