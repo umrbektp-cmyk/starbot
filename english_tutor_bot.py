@@ -48,7 +48,12 @@ def init_db():
                     is_premium BOOLEAN DEFAULT FALSE,
                     chat_count TEXT DEFAULT '{}',
                     writing_count TEXT DEFAULT '{}',
-                    speaking_count TEXT DEFAULT '{}'
+                    speaking_count TEXT DEFAULT '{}',
+                    invite_count INTEGER DEFAULT 0,
+                    invited_by TEXT DEFAULT '',
+                    points INTEGER DEFAULT 0,
+                    challenges_won INTEGER DEFAULT 0,
+                    challenges_played INTEGER DEFAULT 0
                 )
             """)
             cur.execute("""
@@ -68,12 +73,32 @@ def init_db():
                     daily TEXT DEFAULT '{}'
                 )
             """)
-            # Add missing columns if upgrading from old schema
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS challenges (
+                    id SERIAL PRIMARY KEY,
+                    challenger_id TEXT,
+                    challenger_name TEXT,
+                    opponent_id TEXT DEFAULT '',
+                    opponent_name TEXT DEFAULT '',
+                    level TEXT,
+                    questions TEXT DEFAULT '[]',
+                    challenger_score INTEGER DEFAULT -1,
+                    opponent_score INTEGER DEFAULT -1,
+                    status TEXT DEFAULT 'waiting',
+                    created_at TEXT
+                )
+            """)
+            # Add missing columns if upgrading
             for col, defn in [
                 ("is_premium","BOOLEAN DEFAULT FALSE"),
                 ("chat_count","TEXT DEFAULT '{}'"),
                 ("writing_count","TEXT DEFAULT '{}'"),
                 ("speaking_count","TEXT DEFAULT '{}'"),
+                ("invite_count","INTEGER DEFAULT 0"),
+                ("invited_by","TEXT DEFAULT ''"),
+                ("points","INTEGER DEFAULT 0"),
+                ("challenges_won","INTEGER DEFAULT 0"),
+                ("challenges_played","INTEGER DEFAULT 0"),
             ]:
                 try:
                     cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {defn}")
@@ -166,6 +191,110 @@ def inc_daily_count(uid, field):
             cur.execute(f"UPDATE users SET {field}=%s WHERE uid=%s", (json.dumps(data), k))
         conn.commit()
     return data[today]
+
+# ─── Challenge Functions ───────────────────────────────────────────────────────
+def create_challenge(challenger_id, challenger_name, level, questions):
+    k = str(challenger_id)
+    today = datetime.now().strftime("%Y-%m-%d %H:%M")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""INSERT INTO challenges (challenger_id,challenger_name,level,questions,status,created_at)
+                VALUES (%s,%s,%s,%s,'waiting',%s) RETURNING id""",
+                (k, challenger_name, level, json.dumps(questions), today))
+            cid = cur.fetchone()[0]
+        conn.commit()
+    return cid
+
+def get_active_challenge():
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM challenges WHERE status='waiting' ORDER BY id DESC LIMIT 1")
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+def get_ongoing_challenge():
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM challenges WHERE status='ongoing' ORDER BY id DESC LIMIT 1")
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+def accept_challenge(challenge_id, opponent_id, opponent_name):
+    k = str(opponent_id)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE challenges SET opponent_id=%s,opponent_name=%s,status='ongoing' WHERE id=%s",
+                (k, opponent_name, challenge_id))
+        conn.commit()
+
+def submit_challenge_score(challenge_id, uid, score):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM challenges WHERE id=%s", (challenge_id,))
+            ch = dict(cur.fetchone())
+            if ch["challenger_id"] == k:
+                cur.execute("UPDATE challenges SET challenger_score=%s WHERE id=%s", (score, challenge_id))
+            else:
+                cur.execute("UPDATE challenges SET opponent_score=%s WHERE id=%s", (score, challenge_id))
+            # Check if both done
+            cur.execute("SELECT * FROM challenges WHERE id=%s", (challenge_id,))
+            ch = dict(cur.fetchone())
+            if ch["challenger_score"] >= 0 and ch["opponent_score"] >= 0:
+                cur.execute("UPDATE challenges SET status='finished' WHERE id=%s", (challenge_id,))
+        conn.commit()
+    return ch
+
+def get_recent_challenges(limit=5):
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM challenges WHERE status='finished' ORDER BY id DESC LIMIT %s", (limit,))
+            return [dict(r) for r in cur.fetchall()]
+
+def add_points(uid, pts):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET points=points+%s WHERE uid=%s", (pts, k))
+        conn.commit()
+
+def update_challenge_stats(uid, won):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET challenges_played=challenges_played+1 WHERE uid=%s", (k,))
+            if won:
+                cur.execute("UPDATE users SET challenges_won=challenges_won+1 WHERE uid=%s", (k,))
+        conn.commit()
+
+def get_leaderboard(limit=10):
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT uid,name,points,challenges_won,challenges_played FROM users ORDER BY points DESC LIMIT %s", (limit,))
+            return [dict(r) for r in cur.fetchall()]
+
+# ─── Invite Functions ──────────────────────────────────────────────────────────
+def register_invite(new_uid, referrer_uid):
+    k = str(new_uid); r = str(referrer_uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET invited_by=%s WHERE uid=%s AND (invited_by='' OR invited_by IS NULL)", (r, k))
+            cur.execute("UPDATE users SET invite_count=invite_count+1 WHERE uid=%s", (r,))
+            cur.execute("SELECT invite_count FROM users WHERE uid=%s", (r,))
+            row = cur.fetchone()
+        conn.commit()
+    if row and row[0] >= 30:
+        set_premium(r, True)
+        return True  # earned premium
+    return False
+
+def get_invite_count(uid):
+    k = str(uid)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT invite_count FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            return row[0] if row else 0
 
 PREMIUM_MSG = (
     "You've used all your free messages for today! 😊\n\n"
@@ -959,10 +1088,10 @@ PUZZLES=[
 ]
 
 def main_reply_keyboard():
-    return ReplyKeyboardMarkup([[KeyboardButton("Safiya AI"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Talk to Safiya")],[KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
+    return ReplyKeyboardMarkup([[KeyboardButton("Safiya AI"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Talk to Safiya")],[KeyboardButton("🎁 Invite & Earn"),KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
 
 def safiya_ai_keyboard():
-    return InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Quiz",callback_data="mode_quiz"),InlineKeyboardButton("🧩 Word Puzzle",callback_data="mode_puzzle")],[InlineKeyboardButton("📋 Placement Test",callback_data="placement_start"),InlineKeyboardButton("😂 Memes",callback_data="mode_memes")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Quiz",callback_data="mode_quiz"),InlineKeyboardButton("🧩 Word Puzzle",callback_data="mode_puzzle")],[InlineKeyboardButton("📋 Placement Test",callback_data="placement_start"),InlineKeyboardButton("😂 Memes",callback_data="mode_memes")],[InlineKeyboardButton("⚔️ Vocabulary Challenge",callback_data="challenge_menu")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
 
 def skills_levels_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="skill_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="skill_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="skill_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="skill_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="skill_level_advanced")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
@@ -972,6 +1101,73 @@ def skills_menu_keyboard(level):
 
 def talk_levels_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="talk_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="talk_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="talk_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="talk_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="talk_level_advanced")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
+
+def challenge_levels_keyboard():
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="chal_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="chal_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="chal_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="chal_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="chal_level_advanced")],[InlineKeyboardButton("Back",callback_data="safiya_menu")]])
+
+# Vocabulary questions per level for challenges
+VOCAB_QUESTIONS={
+    "beginner":[
+        {"q":"We pick things up with our ______.\n\na) arms\nb) hands\nc) hair\nd) heads","a":"b","e":"We pick things up with our hands. ✅"},
+        {"q":"I lick an ice-cream with my ______.\n\na) knee\nb) chest\nc) lips\nd) tongue","a":"d","e":"We lick with our tongue. ✅"},
+        {"q":"To eat something I put it in my ______.\n\na) mouth\nb) elbow\nc) nose\nd) neck","a":"a","e":"We put food in our mouth. ✅"},
+        {"q":"We comb and brush our ______.\n\na) fingers\nb) shoulder\nc) hair\nd) sole","a":"c","e":"We comb and brush our hair. ✅"},
+        {"q":"I brush my ______ regularly, especially after eating.\n\na) waist\nb) lips\nc) teeth\nd) thumb","a":"c","e":"We brush our teeth regularly. ✅"},
+        {"q":"I sometimes go to school ______ bus.\n\na) in\nb) at\nc) to\nd) by","a":"d","e":"We travel by bus, by car, by train. ✅"},
+        {"q":"I watch ______ while I am sitting on the sofa.\n\na) television\nb) picture\nc) radio\nd) tape","a":"a","e":"We watch television. ✅"},
+        {"q":"I sometimes listen to the ______.\n\na) television\nb) radio\nc) type\nd) film","a":"b","e":"We listen to the radio. ✅"},
+        {"q":"We get wet when it ______.\n\na) freezes\nb) blows\nc) shines\nd) rains","a":"d","e":"We get wet when it rains. ✅"},
+        {"q":"When it is very cold, everything ______.\n\na) rains\nb) freezes\nc) blows\nd) snows","a":"b","e":"When it is very cold, everything freezes. ✅"},
+    ],
+    "elementary":[
+        {"q":"Could you ______ me the way to the town hall?\n\na) let\nb) put\nc) talk\nd) tell","a":"d","e":"Tell me the way — tell is used for directions. ✅"},
+        {"q":"There are eleven players in a football ______.\n\na) game\nb) pitch\nc) team\nd) group","a":"c","e":"Eleven players make a football team. ✅"},
+        {"q":"My car won't start. Could you give me a ______ to town?\n\na) bus\nb) car\nc) hand\nd) lift","a":"d","e":"Give me a lift means a ride in a car. ✅"},
+        {"q":"The mechanic hopes to ______ our car by this evening.\n\na) make\nb) renew\nc) repair\nd) wander","a":"c","e":"Mechanics repair cars. ✅"},
+        {"q":"Can you ______ a photo of me in front of this building?\n\na) check\nb) make\nc) paint\nd) take","a":"d","e":"We take a photo. ✅"},
+        {"q":"The plane ______ late because of the terrible weather.\n\na) blew up\nb) grew up\nc) went on\nd) took off","a":"d","e":"Planes take off — phrasal verb for departure. ✅"},
+        {"q":"Which do you ______ cream or milk?\n\na) rather\nb) eat\nc) prefer\nd) wear","a":"c","e":"We prefer one thing over another. ✅"},
+        {"q":"I've put on ______. I eat too many cakes.\n\na) gloves\nb) mixture\nc) waist\nd) weight","a":"d","e":"Put on weight means to become heavier. ✅"},
+        {"q":"The bus was so ______ that we couldn't all get on.\n\na) crowded\nb) deep\nc) thick\nd) various","a":"a","e":"A crowded bus has too many people. ✅"},
+        {"q":"Can you ______ me the time, please?\n\na) say\nb) tell\nc) speak\nd) talk","a":"b","e":"Tell me the time — we tell the time. ✅"},
+    ],
+    "pre_intermediate":[
+        {"q":"My friend ______ his exams. He is sad.\n\na) stayed\nb) passed\nc) won\nd) failed","a":"d","e":"Failed his exams means he did not pass. ✅"},
+        {"q":"When did you ______ smoking?\n\na) cut off\nb) give up\nc) make up\nd) throw away","a":"b","e":"Give up smoking means to stop smoking. ✅"},
+        {"q":"We had to ______ the match because of the bad weather.\n\na) call back\nb) call off\nc) think over\nd) find out","a":"b","e":"Call off means to cancel. ✅"},
+        {"q":"I'd like to ______ this cheque, please.\n\na) cash\nb) change\nc) pay for\nd) spend","a":"a","e":"Cash a cheque means to exchange it for money. ✅"},
+        {"q":"Take your overcoat with you ______ it gets cold.\n\na) although\nb) in case\nc) unless\nd) until","a":"b","e":"In case means as a precaution. ✅"},
+        {"q":"Thanks very much! I'm very ______ for your help.\n\na) generous\nb) grateful\nc) full\nd) sorry","a":"b","e":"Grateful means thankful. ✅"},
+        {"q":"You mustn't be angry with her. It wasn't her ______ that she was late.\n\na) blame\nb) error\nc) mistake\nd) fault","a":"d","e":"It wasn't her fault — fault means responsibility. ✅"},
+        {"q":"Don't ______ my speech when I am talking.\n\na) cut\nb) interrupt\nc) divide\nd) separate","a":"b","e":"Interrupt means to break into someone's speech. ✅"},
+        {"q":"Anyone who gets free rides in other people's cars is called ______.\n\na) passenger\nb) traveller\nc) goner\nd) hitchhiker","a":"d","e":"A hitchhiker gets free rides. ✅"},
+        {"q":"Most banks will ______ people money to buy a house.\n\na) lend\nb) borrow\nc) give\nd) take","a":"a","e":"Banks lend money — give temporarily. ✅"},
+    ],
+    "intermediate":[
+        {"q":"He's not very quick on the uptake. It takes him a while to ______ new ideas.\n\na) on to a good thing\nb) take on board\nc) bullish\nd) breathing down","a":"b","e":"Take on board means to understand and accept new ideas. ✅"},
+        {"q":"My boss never gives me any freedom. She's always ______ my neck.\n\na) broke the news\nb) brief\nc) breathing down\nd) back to the drawing board","a":"c","e":"Breathing down someone's neck means watching too closely. ✅"},
+        {"q":"We need a name for our new brand. The best thing is to get people together and ______ a name.\n\na) brief\nb) on to a good thing\nc) broke the news\nd) brainstorm","a":"d","e":"Brainstorm means to generate ideas as a group. ✅"},
+        {"q":"Whatever we do, we are going to come out badly. It's a ______ situation.\n\na) a can of worms\nb) carry the can\nc) chicken\nd) can't win","a":"d","e":"Can't win means there is no good outcome possible. ✅"},
+        {"q":"I reckon we owe each other the same. Why don't we just ______?\n\na) call his bluff\nb) called it a day\nc) calls the shots\nd) call it quits","a":"d","e":"Call it quits means to agree that neither owes the other. ✅"},
+        {"q":"We've been working on this for fourteen hours. Isn't it time we ______?\n\na) called it a day\nb) call it quits\nc) calls the shots\nd) chicken","a":"a","e":"Called it a day means to stop work for the day. ✅"},
+        {"q":"She always likes to think things through very carefully. She likes to ______.\n\na) chicken and egg\nb) chicken\nc) chew things over\nd) call his bluff","a":"c","e":"Chew things over means to think carefully. ✅"},
+        {"q":"I'm very happy with our sales prospects. I'm feeling really ______.\n\na) bullish\nb) back to the drawing board\nc) broke the news\nd) on to a good thing","a":"a","e":"Bullish means optimistic about prospects. ✅"},
+        {"q":"We'll have to start again on this one. It's time to go ______.\n\na) blow-by-blow\nb) blew it\nc) black economy\nd) back to the drawing board","a":"d","e":"Back to the drawing board means start again from scratch. ✅"},
+        {"q":"Production cannot keep pace with demand. We must eliminate the ______.\n\na) blow-by-blow\nb) back to the drawing board\nc) blew it\nd) bottlenecks","a":"d","e":"Bottlenecks are obstacles that slow down production. ✅"},
+    ],
+    "advanced":[
+        {"q":"Losing the contract was ___ to swallow.\n\na) bottom line\nb) blue collar\nc) a bitter pill\nd) back to the drawing board","a":"c","e":"A bitter pill means something unpleasant that must be accepted. ✅"},
+        {"q":"You really ___, didn't you? We lost the contract thanks to your incompetence.\n\na) back to the drawing board\nb) bottlenecks\nc) bottom line\nd) blew it","a":"d","e":"Blew it means completely failed or ruined something. ✅"},
+        {"q":"The product sold really well in England. As they say there, it ______.\n\na) back to the drawing board\nb) bottlenecks\nc) bottom line\nd) went like a bomb","a":"d","e":"Went like a bomb means it was very successful in British English. ✅"},
+        {"q":"He used to work on the factory floor. He really started as a ______ worker.\n\na) blue collar\nb) back to the drawing board\nc) bottlenecks\nd) bottom line","a":"a","e":"Blue collar refers to manual or factory workers. ✅"},
+        {"q":"There are many reasons but the ______ is that it has been a big flop.\n\na) bottom line\nb) back to the drawing board\nc) bottlenecks\nd) blow-by-blow","a":"a","e":"The bottom line means the most important conclusion. ✅"},
+        {"q":"Don't leave out any details. I want a full ______ account of the meeting.\n\na) blow-by-blow\nb) blew it\nc) black economy\nd) bombed","a":"a","e":"Blow-by-blow means describing every detail in sequence. ✅"},
+        {"q":"At the start everybody was quiet but he told jokes to ______.\n\na) across the board\nb) break the ice\nc) broke the news\nd) back to the drawing board","a":"b","e":"Break the ice means to make people feel more relaxed. ✅"},
+        {"q":"We're going to reduce budgets in every department. There will be ______ cuts.\n\na) back to the drawing board\nb) brief\nc) on to a good thing\nd) across the board","a":"d","e":"Across the board means affecting everyone equally. ✅"},
+        {"q":"I've heard all about it. Sally ______ to me.\n\na) brainstorm\nb) on to a good thing\nc) back to the drawing board\nd) broke the news","a":"d","e":"Broke the news means told someone important information first. ✅"},
+        {"q":"This market study shows nobody wants our product. It's ______ for us.\n\na) back to the drawing board\nb) brainstorm\nc) breathing down\nd) across the board","a":"a","e":"Back to the drawing board means start planning again from scratch. ✅"},
+    ],
+}
 
 SPEAKING_QUESTIONS={
     "beginner":[
@@ -1142,8 +1338,21 @@ async def start(update,context):
     uid=update.effective_user.id; name=update.effective_user.first_name or ""
     if not await check_membership(uid,context):
         await update.message.reply_text("Welcome! Join our channel first.\n\nOnce you join, tap 'I Joined'!",reply_markup=join_keyboard()); return
-    u=get_user(uid,name); get_session(uid)["mode"]="chat"; is_new=u.get("messages",0)==0
-    prompt=(f"New user named {name} just started. Warmly introduce yourself as Safiya, support teacher at Premier Tutoring Center. Briefly mention the four buttons: Safiya AI for learning tools, Dictionary for word lookups, Skills for level-based practice, and Complaints & Offers to reach the team."
+    u=get_user(uid,name)
+    # Handle referral
+    if context.args and context.args[0].startswith("ref_"):
+        referrer_id=context.args[0].replace("ref_","")
+        if referrer_id!=str(uid):
+            earned=register_invite(uid,referrer_id)
+            if earned:
+                try: await context.bot.send_message(chat_id=int(referrer_id),text="🎉 Congratulations! You invited 30 friends and earned FREE Premium! Enjoy unlimited access! 🌟")
+                except: pass
+            else:
+                count=get_invite_count(referrer_id)
+                try: await context.bot.send_message(chat_id=int(referrer_id),text=f"🎁 A new friend joined using your link! You have {count}/30 invites. Keep sharing! 😊")
+                except: pass
+    get_session(uid)["mode"]="chat"; is_new=u.get("messages",0)==0
+    prompt=(f"New user named {name} just started. Warmly introduce yourself as Safiya, support teacher at Premier Tutoring Center. Briefly mention the buttons available."
             if is_new else f"Welcome back {name} warmly in one friendly sentence.")
     reply=ask_claude(uid,prompt)
     await update.message.reply_text(reply,reply_markup=main_reply_keyboard())
@@ -1154,11 +1363,26 @@ async def help_command(update,context):
 
 async def score_command(update,context):
     if not await require_membership(update,context): return
-    uid=str(update.effective_user.id); p=student_progress.get(uid)
+    uid=update.effective_user.id
+    p=get_progress(uid)
     if not p or p.get("total",0)==0:
         await update.message.reply_text("No results yet — take a quiz to get started! 😊",reply_markup=main_reply_keyboard()); return
     s,t=p["score"],p["total"]; pct=int(s/t*100)
-    await update.message.reply_text(f"Your progress:\nQuiz: {s}/{t} ({pct}%)\nStreak: {p.get('streak',0)} days\nEssays: {p.get('essays_checked',0)} | IELTS: {p.get('ielts_checks',0)}\nPuzzles: {p.get('puzzles_solved',0)} | Articles: {p.get('articles_read',0)}\n\nKeep it up! 💪",reply_markup=main_reply_keyboard())
+    pts=0
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT points,challenges_won,challenges_played FROM users WHERE uid=%s",(str(uid),))
+                row=cur.fetchone()
+                if row: pts,cw,cp=row[0] or 0,row[1] or 0,row[2] or 0
+                else: cw,cp=0,0
+    except: cw,cp=0,0
+    await update.message.reply_text(
+        f"Your progress:\nQuiz: {s}/{t} ({pct}%)\nStreak: {p.get('streak',0)} days\n"
+        f"Essays: {p.get('essays_checked',0)} | IELTS: {p.get('ielts_checks',0)}\n"
+        f"Puzzles: {p.get('puzzles_solved',0)} | Articles: {p.get('articles_read',0)}\n"
+        f"⚔️ Challenges: {cw} won / {cp} played | 🏆 Points: {pts}\n\nKeep it up! 💪",
+        reply_markup=main_reply_keyboard())
 
 async def send_quiz(uoq,context,uid):
     sess=get_session(uid); idx=random.randint(0,len(QUIZ_QUESTIONS)-1); sess["quiz_index"]=idx; sess["mode"]="quiz"; q=QUIZ_QUESTIONS[idx]
@@ -1211,6 +1435,161 @@ async def button_callback(update,context):
         sess["mode"]="chat"; await query.edit_message_text("What would you like to do? 😊",reply_markup=safiya_ai_keyboard())
     elif data=="close_menu":
         await query.edit_message_text("Feel free to chat or tap any button below! 😊")
+    elif data=="challenge_menu":
+        # Show leaderboard + recent battles + start button
+        lb=get_leaderboard(5); recent=get_recent_challenges(3)
+        active=get_active_challenge(); ongoing=get_ongoing_challenge()
+        text="⚔️ *Vocabulary Challenge*\n\n"
+        if lb:
+            text+="🏆 *Leaderboard:*\n"
+            medals=["🥇","🥈","🥉","4️⃣","5️⃣"]
+            for i,u in enumerate(lb):
+                wr=f"{int(u['challenges_won']/u['challenges_played']*100)}%" if u['challenges_played']>0 else "0%"
+                text+=f"{medals[i]} {u['name'] or 'User'} — {u['points']}pts ({wr} win rate)\n"
+            text+="\n"
+        if recent:
+            text+="⚔️ *Recent Battles:*\n"
+            for b in recent:
+                winner=b['challenger_name'] if b['challenger_score']>b['opponent_score'] else b['opponent_name']
+                text+=f"• {b['challenger_name']} vs {b['opponent_name']} → {winner} won!\n"
+            text+="\n"
+        if active:
+            text+=f"🔥 *Active challenge by {active['challenger_name']}* — Level: {active['level'].replace('_',' ').title()}\n\n"
+        elif ongoing:
+            text+=f"⚔️ Battle in progress: {ongoing['challenger_name']} vs {ongoing['opponent_name']}\n\n"
+        text+="Start your own challenge or accept one above!"
+        kb_rows=[]
+        if active:
+            kb_rows.append([InlineKeyboardButton(f"⚔️ Accept {active['challenger_name']}'s Challenge!",callback_data=f"chal_accept_{active['id']}")])
+        kb_rows.append([InlineKeyboardButton("🔥 Start a Challenge",callback_data="chal_start")])
+        kb_rows.append([InlineKeyboardButton("Back",callback_data="safiya_menu")])
+        await query.edit_message_text(text,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup(kb_rows))
+    elif data=="chal_start":
+        await query.edit_message_text("Choose your challenge level! ⚔️",reply_markup=challenge_levels_keyboard())
+    elif data.startswith("chal_level_"):
+        level=data.replace("chal_level_","")
+        questions=random.sample(VOCAB_QUESTIONS.get(level,[]),min(10,len(VOCAB_QUESTIONS.get(level,[]))))
+        cid=create_challenge(uid,uname,level,[{"q":q["q"],"a":q["a"],"e":q["e"]} for q in questions])
+        sess["challenge_id"]=cid; sess["challenge_q_idx"]=0; sess["challenge_score"]=0
+        sess["challenge_questions"]=questions; sess["challenge_role"]="challenger"
+        # Broadcast to all users
+        import asyncio
+        all_users=get_all_users(); ld=level.replace("_"," ").title()
+        msg=(f"⚔️ *{uname}* has challenged everyone to a Vocabulary Battle!\n\n"
+             f"Level: *{ld}*\n\nFirst to accept gets to fight! 🔥")
+        for row in all_users:
+            if int(row["uid"])!=uid:
+                try:
+                    await context.bot.send_message(chat_id=int(row["uid"]),text=msg,parse_mode="Markdown",
+                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚔️ Accept Challenge!",callback_data=f"chal_accept_{cid}")]]))
+                    await asyncio.sleep(0.05)
+                except: pass
+        # Start challenger's quiz
+        q=questions[0]
+        await query.edit_message_text(
+            f"⚔️ Challenge started! Waiting for an opponent...\n\nMeanwhile answer your questions!\n\n*Question 1/10:*\n\n{q['q']}",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("A",callback_data="chal_a"),InlineKeyboardButton("B",callback_data="chal_b"),InlineKeyboardButton("C",callback_data="chal_c"),InlineKeyboardButton("D",callback_data="chal_d")]]))
+        add_points(uid,1)  # +1 for challenging
+    elif data.startswith("chal_accept_"):
+        cid=int(data.replace("chal_accept_",""))
+        with get_db() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT * FROM challenges WHERE id=%s",(cid,)); ch=cur.fetchone()
+        if not ch:
+            await query.answer("Challenge not found!",show_alert=True); return
+        ch=dict(ch)
+        if ch["status"]=="finished":
+            await query.answer("This challenge is already finished!",show_alert=True); return
+        if ch["status"]=="ongoing":
+            c_name=ch["challenger_name"]; o_name=ch["opponent_name"]
+            await query.edit_message_text(
+                f"⚔️ Too late! The battle between *{c_name}* and *{o_name}* has already begun!\n\nWant to start your own challenge?",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔥 Start My Challenge",callback_data="chal_start")],[InlineKeyboardButton("Back",callback_data="challenge_menu")]]))
+            return
+        if ch["challenger_id"]==str(uid):
+            await query.answer("You can't accept your own challenge!",show_alert=True); return
+        accept_challenge(cid,uid,uname)
+        questions=json.loads(ch["questions"])
+        sess["challenge_id"]=cid; sess["challenge_q_idx"]=0; sess["challenge_score"]=0
+        sess["challenge_questions"]=questions; sess["challenge_role"]="opponent"
+        q=questions[0]
+        await query.edit_message_text(
+            f"⚔️ You accepted *{ch['challenger_name']}'s* challenge!\n\nLevel: {ch['level'].replace('_',' ').title()}\n\n*Question 1/10:*\n\n{q['q']}",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("A",callback_data="chal_a"),InlineKeyboardButton("B",callback_data="chal_b"),InlineKeyboardButton("C",callback_data="chal_c"),InlineKeyboardButton("D",callback_data="chal_d")]]))
+        try: await context.bot.send_message(chat_id=int(ch["challenger_id"]),text=f"⚔️ *{uname}* accepted your challenge! The battle has begun! Answer fast! 🔥",parse_mode="Markdown")
+        except: pass
+    elif data.startswith("chal_"):
+        if not sess.get("challenge_id"): return
+        ans={"chal_a":"a","chal_b":"b","chal_c":"c","chal_d":"d"}.get(data)
+        if not ans: return
+        questions=sess.get("challenge_questions",[])
+        q_idx=sess.get("challenge_q_idx",0)
+        if q_idx>=len(questions): return
+        q=questions[q_idx]
+        correct=ans==q["a"]
+        if correct: sess["challenge_score"]=sess.get("challenge_score",0)+1
+        sess["challenge_q_idx"]=q_idx+1
+        next_idx=q_idx+1
+        if next_idx>=len(questions):
+            # Done — submit score
+            score=sess["challenge_score"]; cid=sess["challenge_id"]
+            ch=submit_challenge_score(cid,uid,score)
+            ch_score=ch.get("challenger_score",-1); op_score=ch.get("opponent_score",-1)
+            if ch_score>=0 and op_score>=0:
+                # Both done — show results
+                c_name=ch["challenger_name"]; o_name=ch["opponent_name"]
+                if ch_score>op_score: winner=c_name; loser=o_name; w_id=ch["challenger_id"]; l_id=ch["opponent_id"]
+                elif op_score>ch_score: winner=o_name; loser=c_name; w_id=ch["opponent_id"]; l_id=ch["challenger_id"]
+                else: winner=None; w_id=None; l_id=None
+                result=(f"🏆 *Battle Results!*\n\n⚔️ {c_name} vs {o_name}\n\n"
+                        f"{c_name}: {ch_score}/10\n{o_name}: {op_score}/10\n\n")
+                if winner: result+=f"🥇 *{winner} wins!*"
+                else: result+="🤝 *It's a draw!*"
+                share_kb=InlineKeyboardMarkup([[InlineKeyboardButton("🔥 Share Victory",callback_data=f"chal_share_{cid}")],[InlineKeyboardButton("New Challenge",callback_data="chal_start")]])
+                # Add points
+                if w_id:
+                    add_points(int(w_id),10); update_challenge_stats(w_id,True)
+                    add_points(int(l_id),3); update_challenge_stats(l_id,False)
+                    # Bonus for perfect score
+                    if ch_score==10: add_points(int(ch["challenger_id"]),5)
+                    if op_score==10: add_points(int(ch["opponent_id"]),5)
+                await query.edit_message_text(result,parse_mode="Markdown",reply_markup=share_kb)
+                try:
+                    other_id=ch["opponent_id"] if str(uid)==ch["challenger_id"] else ch["challenger_id"]
+                    await context.bot.send_message(chat_id=int(other_id),text=result,parse_mode="Markdown",reply_markup=share_kb)
+                except: pass
+            else:
+                await query.edit_message_text(f"✅ You answered {score}/10! Waiting for your opponent to finish... ⏳")
+        else:
+            next_q=questions[next_idx]
+            fb="✅ Correct!" if correct else f"❌ Incorrect! Answer: {q['a'].upper()}"
+            await query.edit_message_text(
+                f"{fb}\n\n*Question {next_idx+1}/10:*\n\n{next_q['q']}",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("A",callback_data="chal_a"),InlineKeyboardButton("B",callback_data="chal_b"),InlineKeyboardButton("C",callback_data="chal_c"),InlineKeyboardButton("D",callback_data="chal_d")]]))
+    elif data.startswith("chal_share_"):
+        cid=int(data.replace("chal_share_",""))
+        with get_db() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT * FROM challenges WHERE id=%s",(cid,)); ch=dict(cur.fetchone())
+        c_name=ch["challenger_name"]; o_name=ch["opponent_name"]
+        c_score=ch["challenger_score"]; o_score=ch["opponent_score"]
+        winner=c_name if c_score>o_score else o_name if o_score>c_score else None
+        share_msg=(f"🏆 *Vocabulary Battle Result!*\n\n⚔️ {c_name} vs {o_name}\n"
+                   f"{c_name}: {c_score}/10 | {o_name}: {o_score}/10\n\n"
+                   f"{'🥇 '+winner+' wins!' if winner else '🤝 Draw!'}\n\nThink you can do better? Tap below! 👇")
+        import asyncio
+        all_users=get_all_users()
+        for row in all_users:
+            try:
+                await context.bot.send_message(chat_id=int(row["uid"]),text=share_msg,parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚔️ Challenge Now!",callback_data="chal_start")]]))
+                await asyncio.sleep(0.05)
+            except: pass
+        await query.answer("Victory shared! 🎉",show_alert=True)
     elif data=="skills_back":
         await query.edit_message_text("Choose your level! 🎯",reply_markup=skills_levels_keyboard())
     elif data=="mode_memes":
@@ -1446,6 +1825,21 @@ async def handle_message(update,context):
     if text=="Talk to Safiya":
         if not await require_membership(update,context): return
         await update.message.reply_text("Choose your speaking level! 🎤",reply_markup=talk_levels_keyboard()); return
+    if text=="🎁 Invite & Earn":
+        if not await require_membership(update,context): return
+        bot_username=(await context.bot.get_me()).username
+        invite_link=f"https://t.me/{bot_username}?start=ref_{uid}"
+        count=get_invite_count(uid)
+        remaining=max(0,30-count)
+        premium="🌟 You already have Premium!" if is_premium(uid) else f"Invite {remaining} more friends to earn FREE Premium!"
+        await update.message.reply_text(
+            f"🎁 *Invite & Earn FREE Premium!*\n\n"
+            f"Invite 30 friends → get 1 month Premium FREE!\n\n"
+            f"Your progress: {count}/30 friends invited 🔥\n\n"
+            f"{premium}\n\n"
+            f"Your personal link:\n{invite_link}\n\n"
+            f"Share this link with your friends. When they join using your link it counts as 1 invite!",
+            parse_mode="Markdown"); return
     if text=="Complaints & Offers":
         if not await require_membership(update,context): return
         await update.message.reply_text("Have a complaint or suggestion? Reach us directly here 👇",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Contact @umrbektp",url=ADMIN_URL)]])); return
