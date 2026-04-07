@@ -1442,7 +1442,8 @@ async def button_callback(update,context):
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back",callback_data="safiya_menu")]]))
     elif data=="challenge_menu":
-        # Only premium can start a challenge
+        if not CHALLENGE_ENABLED:
+            await query.edit_message_text("⚔️ Vocabulary Challenge is temporarily unavailable. Check back soon! 😊",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back",callback_data="safiya_menu")]])); return
         lb=get_leaderboard(5); recent=get_recent_challenges(3)
         active=get_active_challenge(); ongoing=get_ongoing_challenge()
         text="⚔️ *Vocabulary Challenge*\n\n"
@@ -1913,6 +1914,15 @@ async def puzzle_command(u,c):
     get_session(u.effective_user.id)["mode"]="puzzle"; await send_puzzle(u,c,u.effective_user.id)
 
 ADMIN_ID=960055324
+CHALLENGE_ENABLED=True
+
+async def togglechallenge_command(update,context):
+    global CHALLENGE_ENABLED
+    if update.effective_user.id!=ADMIN_ID:
+        await update.message.reply_text("You are not authorized."); return
+    CHALLENGE_ENABLED=not CHALLENGE_ENABLED
+    status="✅ Enabled" if CHALLENGE_ENABLED else "❌ Disabled"
+    await update.message.reply_text(f"Vocabulary Challenge is now: {status}")
 
 async def stats_command(update,context):
     if update.effective_user.id!=ADMIN_ID:
@@ -2022,6 +2032,7 @@ def main():
     app.add_handler(CommandHandler("score",score_command))
     app.add_handler(CommandHandler("stats",stats_command))
     app.add_handler(CommandHandler("broadcast",broadcast_command))
+    app.add_handler(CommandHandler("togglechallenge",togglechallenge_command))
     app.add_handler(CommandHandler("addpremium",addpremium_command))
     app.add_handler(CommandHandler("removepremium",removepremium_command))
     app.add_handler(CommandHandler("premiumlist",premiumlist_command))
