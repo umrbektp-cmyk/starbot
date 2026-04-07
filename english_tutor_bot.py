@@ -1825,14 +1825,20 @@ async def handle_message(update,context):
         count=get_invite_count(uid)
         remaining=max(0,30-count)
         premium="🌟 You already have Premium!" if is_premium(uid) else f"Invite {remaining} more friends to earn FREE Premium!"
+        # Pre-written message user can forward
+        forward_msg=(f"Hey! I'm using Safiya AI to improve my English! 🎓\n\n"
+                     f"It has speaking practice, writing check, vocabulary challenges and more!\n\n"
+                     f"Join here and start learning: {invite_link}")
         await update.message.reply_text(
             f"🎁 *Invite & Earn FREE Premium!*\n\n"
             f"Invite 30 friends → get 1 month Premium FREE!\n\n"
             f"Your progress: {count}/30 friends invited 🔥\n\n"
             f"{premium}\n\n"
-            f"Your personal link:\n{invite_link}\n\n"
-            f"Share this link with your friends. When they join using your link it counts as 1 invite!",
-            parse_mode="Markdown"); return
+            f"👇 Forward this message to your friends:",
+            parse_mode="Markdown")
+        await update.message.reply_text(forward_msg,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📤 Share with a friend",url=f"https://t.me/share/url?url={invite_link}&text=Join+Safiya+AI+and+improve+your+English!")]]))
+        return
     if text=="Complaints & Offers":
         if not await require_membership(update,context): return
         await update.message.reply_text("Have a complaint or suggestion? Reach us directly here 👇",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Contact @umrbektp",url=ADMIN_URL)]])); return
