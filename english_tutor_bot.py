@@ -277,15 +277,21 @@ def get_leaderboard(limit=10):
 def register_invite(new_uid, referrer_uid):
     k = str(new_uid); r = str(referrer_uid)
     with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE users SET invited_by=%s WHERE uid=%s AND (invited_by='' OR invited_by IS NULL)", (r, k))
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Check if this user already existed before (messages > 0 means they used the bot before)
+            cur.execute("SELECT messages, invited_by FROM users WHERE uid=%s", (k,))
+            row = cur.fetchone()
+            if not row: return False  # user doesn't exist yet
+            if row["messages"] > 0: return False  # already used bot before
+            if row["invited_by"]: return False  # already invited by someone
+            cur.execute("UPDATE users SET invited_by=%s WHERE uid=%s", (r, k))
             cur.execute("UPDATE users SET invite_count=invite_count+1 WHERE uid=%s", (r,))
             cur.execute("SELECT invite_count FROM users WHERE uid=%s", (r,))
-            row = cur.fetchone()
+            count_row = cur.fetchone()
         conn.commit()
-    if row and row[0] >= 30:
+    if count_row and count_row[0] >= 30:
         set_premium(r, True)
-        return True  # earned premium
+        return True
     return False
 
 def get_invite_count(uid):
@@ -1474,6 +1480,8 @@ async def button_callback(update,context):
         kb_rows.append([InlineKeyboardButton("Back",callback_data="safiya_menu")])
         await query.edit_message_text(text,parse_mode="Markdown",reply_markup=InlineKeyboardMarkup(kb_rows))
     elif data=="chal_start":
+        if not is_premium(uid):
+            await query.edit_message_text("⚔️ Vocabulary Challenge is a Premium feature!\n\nUpgrade to Premium for only 28,000 so'm/month.\n\nContact: @umrbektp 😊",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back",callback_data="challenge_menu")]])); return
         await query.edit_message_text("Choose your challenge level! ⚔️",reply_markup=challenge_levels_keyboard())
     elif data.startswith("chal_level_"):
         level=data.replace("chal_level_","")
@@ -1857,6 +1865,11 @@ async def handle_message(update,context):
         return
 
     if mode=="idea_gen":
+        # Check daily limit for free users
+        if not is_premium(uid):
+            count=get_daily_count(uid,"writing_count")
+            if count>=1:
+                await update.message.reply_text(PREMIUM_MSG); return
         await context.bot.send_chat_action(update.effective_chat.id,action="typing")
         IDEA_SYS="""You are an IELTS writing coach. The student gives you an essay topic. Give them:
 FOR arguments: 5 clear points supporting the topic
@@ -1882,6 +1895,7 @@ Format exactly like this:
 • word/phrase — meaning"""
         reply=ask_claude(uid,f"Essay topic: {text}",system=IDEA_SYS,max_tokens=600)
         sess["mode"]="chat"
+        if not is_premium(uid): inc_daily_count(uid,"writing_count")
         await update.message.reply_text(reply,reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("New Topic 💡",callback_data="idea_gen")],[InlineKeyboardButton("Back to Tools",callback_data="safiya_menu")]]))
         return
 
