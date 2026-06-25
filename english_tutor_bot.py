@@ -1094,7 +1094,7 @@ PUZZLES=[
 ]
 
 def main_reply_keyboard():
-    return ReplyKeyboardMarkup([[KeyboardButton("Tools"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Talk to Safiya")],[KeyboardButton("🎁 Invite & Earn"),KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
+    return ReplyKeyboardMarkup([[KeyboardButton("💡 Idea Generator"),KeyboardButton("Dictionary")],[KeyboardButton("Skills"),KeyboardButton("Complaints & Offers")]],resize_keyboard=True,input_field_placeholder="Chat with Safiya...")
 
 def safiya_ai_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Quiz",callback_data="mode_quiz"),InlineKeyboardButton("🧩 Word Puzzle",callback_data="mode_puzzle")],[InlineKeyboardButton("📋 Placement Test",callback_data="placement_start"),InlineKeyboardButton("😂 Memes",callback_data="mode_memes")],[InlineKeyboardButton("⚔️ Vocabulary Challenge",callback_data="challenge_menu"),InlineKeyboardButton("💡 Idea Generator",callback_data="idea_gen")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
@@ -1103,7 +1103,7 @@ def skills_levels_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="skill_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="skill_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="skill_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="skill_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="skill_level_advanced")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
 
 def skills_menu_keyboard(level):
-    return InlineKeyboardMarkup([[InlineKeyboardButton("📖 Reading",callback_data=f"skill_reading_{level}"),InlineKeyboardButton("✍️ Writing Check",callback_data=f"skill_writing_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]])
+    return InlineKeyboardMarkup([[InlineKeyboardButton("✍️ Writing Check",callback_data=f"skill_writing_{level}")],[InlineKeyboardButton("Back to Levels",callback_data="skills_back")]]) 
 
 def talk_levels_keyboard():
     return InlineKeyboardMarkup([[InlineKeyboardButton("🟢 Beginner",callback_data="talk_level_beginner")],[InlineKeyboardButton("🔵 Elementary",callback_data="talk_level_elementary")],[InlineKeyboardButton("🟡 Pre-Intermediate",callback_data="talk_level_pre_intermediate")],[InlineKeyboardButton("🟠 Intermediate",callback_data="talk_level_intermediate")],[InlineKeyboardButton("🔴 Advanced",callback_data="talk_level_advanced")],[InlineKeyboardButton("Close",callback_data="close_menu")]])
@@ -1358,7 +1358,7 @@ async def start(update,context):
                 try: await context.bot.send_message(chat_id=int(referrer_id),text=f"🎁 A new friend joined using your link! You have {count}/30 invites. Keep sharing! 😊")
                 except: pass
     get_session(uid)["mode"]="chat"; is_new=u.get("messages",0)==0
-    prompt=(f"New user named {name} just started. Warmly introduce yourself as Safiya, support teacher at Premier Tutoring Center. Briefly mention the buttons available."
+    prompt=(f"New user named {name} just started. Warmly introduce yourself as Safiya, support teacher at Premier Tutoring Center. Briefly mention the four buttons: Idea Generator for IELTS essay ideas, Dictionary for word lookups, Skills for writing practice, and Complaints & Offers to reach the team."
             if is_new else f"Welcome back {name} warmly in one friendly sentence.")
     reply=ask_claude(uid,prompt)
     await update.message.reply_text(reply,reply_markup=main_reply_keyboard())
@@ -1813,9 +1813,10 @@ async def handle_message(update,context):
     sess=get_session(uid); text=update.message.text.strip(); mode=sess.get("mode","chat")
     get_user(uid,uname)
 
-    if text=="Tools":
+    if text=="💡 Idea Generator":
         if not await require_membership(update,context): return
-        await update.message.reply_text("What would you like to do? 😊",reply_markup=safiya_ai_keyboard()); return
+        sess["mode"]="idea_gen"
+        await update.message.reply_text("💡 *Idea Generator*\n\nType your IELTS Task 2 topic and I'll give you FOR and AGAINST ideas plus useful vocabulary!\n\nExample: *Social media is harmful to society*",parse_mode="Markdown"); return
     if text=="Dictionary":
         if not await require_membership(update,context): return
         sess["mode"]="dictionary"
@@ -1823,30 +1824,6 @@ async def handle_message(update,context):
     if text=="Skills":
         if not await require_membership(update,context): return
         await update.message.reply_text("Choose your level! 🎯",reply_markup=skills_levels_keyboard()); return
-    if text=="Talk to Safiya":
-        if not await require_membership(update,context): return
-        await update.message.reply_text("Choose your speaking level! 🎤",reply_markup=talk_levels_keyboard()); return
-    if text=="🎁 Invite & Earn":
-        if not await require_membership(update,context): return
-        bot_username=(await context.bot.get_me()).username
-        invite_link=f"https://t.me/{bot_username}?start=ref_{uid}"
-        count=get_invite_count(uid)
-        remaining=max(0,30-count)
-        premium="🌟 You already have Premium!" if is_premium(uid) else f"Invite {remaining} more friends to earn FREE Premium!"
-        # Pre-written message user can forward
-        forward_msg=(f"Hey! I'm using Safiya AI to improve my English! 🎓\n\n"
-                     f"It has speaking practice, writing check, vocabulary challenges and more!\n\n"
-                     f"Join here and start learning: {invite_link}")
-        await update.message.reply_text(
-            f"🎁 *Invite & Earn FREE Premium!*\n\n"
-            f"Invite 30 friends → get 1 month Premium FREE!\n\n"
-            f"Your progress: {count}/30 friends invited 🔥\n\n"
-            f"{premium}\n\n"
-            f"👇 Forward this message to your friends:",
-            parse_mode="Markdown")
-        await update.message.reply_text(forward_msg,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📤 Share with a friend",url=f"https://t.me/share/url?url={invite_link}&text=Join+Safiya+AI+and+improve+your+English!")]]))
-        return
     if text=="Complaints & Offers":
         if not await require_membership(update,context): return
         await update.message.reply_text("Have a complaint or suggestion? Reach us directly here 👇",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Contact @umrbektp",url=ADMIN_URL)]])); return
