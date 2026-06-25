@@ -2039,7 +2039,7 @@ def main():
     app.add_handler(MessageHandler(filters.VOICE,handle_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
     print("Safiya is running!")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__=="__main__":
     main()
