@@ -1019,7 +1019,7 @@ def ask_claude(uid,msg,system=None,max_tokens=500):
     if not system and name: sp+=f"\n\nUser's name: {name}"
     sess["history"].append({"role":"user","content":msg})
     history=sess["history"][-14:]
-    r=claude_client.messages.create(model="claude-sonnet-4-20250514",max_tokens=max_tokens,system=sp,messages=history)
+    r=claude_client.messages.create(model="claude-sonnet-4-5",max_tokens=max_tokens,system=sp,messages=history)
     reply=r.content[0].text
     sess["history"].append({"role":"assistant","content":reply})
     try: inc_messages(uid)
