@@ -778,12 +778,12 @@ function getBestFemaleVoice() {
 function stopSafiya() {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   window.speechSynthesis.cancel();
-  safiyaSpeaking = false; targetEnergy = 0;
+  safiyaSpeaking = false; targetEnergy = 0; burstSpreadTarget = 0;
   document.getElementById('slideToggle').classList.remove('speaking','on','listening');
 }
 
 function speakDone() {
-  safiyaSpeaking = false; targetEnergy = 0;
+  safiyaSpeaking = false; targetEnergy = 0; burstSpreadTarget = 0;
   document.getElementById('slideToggle').classList.remove('speaking','on','listening');
   setStatus(lang === 'en' ? 'Slide to speak' : 'Siljiting va gapiring');
 }
