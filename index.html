@@ -395,41 +395,7 @@
       <input class="name-input" id="nameInput" type="text" placeholder="Enter your name..." maxlength="40" oninput="checkReady()" />
     </div>
 
-    <div>
-      <div class="welcome-label">Choose your level</div>
-      <div class="level-grid">
-        <button class="level-btn" data-level="beginner" onclick="selectLevel('beginner')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Beginner
-          </span>
-          <span class="level-desc">A1 · Complete beginner</span>
-        </button>
-        <button class="level-btn" data-level="elementary" onclick="selectLevel('elementary')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Elementary
-          </span>
-          <span class="level-desc">A2 · Basic English</span>
-        </button>
-        <button class="level-btn" data-level="pre-intermediate" onclick="selectLevel('pre-intermediate')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Pre-Intermediate
-          </span>
-          <span class="level-desc">B1 · Getting there</span>
-        </button>
-        <button class="level-btn" data-level="intermediate" onclick="selectLevel('intermediate')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Intermediate
-          </span>
-          <span class="level-desc">B2 · Comfortable conversations</span>
-        </button>
-        <button class="level-btn" data-level="advanced" onclick="selectLevel('advanced')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Advanced
-          </span>
-          <span class="level-desc">C1/C2 · Near fluent</span>
-        </button>
-      </div>
-    </div>
+    
 
     <button class="start-btn" id="startBtn" onclick="startSession()">Start Practice →</button>
     <div class="welcome-error" id="welcomeError"></div>
@@ -511,15 +477,28 @@ const TG_USER = tg?.initDataUnsafe?.user || null;
 const TG_NAME = TG_USER ? (TG_USER.first_name + (TG_USER.last_name ? ' ' + TG_USER.last_name : '')) : null;
 const TG_ID   = TG_USER ? String(TG_USER.id) : null;
 
-// If coming from Telegram: hide name input, show greeting instead
+// If coming from Telegram with name: auto-register and skip welcome screen
 if (TG_NAME) {
-  const ns = document.getElementById('nameSection');
-  if (ns) ns.style.display = 'none';
-
-  const greeting = document.createElement('div');
-  greeting.style.cssText = 'text-align:center;padding:4px 0 2px';
-  greeting.innerHTML = `<span style="font-size:15px;font-weight:600;color:#7c3aed">Hey, ${TG_USER.first_name}!</span><br><span style="font-size:12px;color:rgba(80,60,150,0.6)">Pick your level to start</span>`;
-  ns.parentNode.insertBefore(greeting, ns);
+  // Auto-register with Telegram name
+  fetch(BASE_URL + '/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: TG_NAME, level: selectedLevel })
+  }).then(r => r.json()).then(data => {
+    if (data.id) {
+      const storageKey = `safiya_student_${TG_ID}`;
+      try { localStorage.setItem(storageKey, JSON.stringify({ id: data.id, name: data.name, level: data.level })); } catch(e) {}
+      applySession(data.id, data.name, data.level);
+    }
+  }).catch(() => {
+    // If auto-register fails, just show name in welcome
+    const ns = document.getElementById('nameSection');
+    if (ns) ns.style.display = 'none';
+    const greeting = document.createElement('div');
+    greeting.style.cssText = 'text-align:center;padding:4px 0 2px';
+    greeting.innerHTML = \`<span style="font-size:15px;font-weight:600;color:#7c3aed">Hey, \${TG_USER.first_name}!</span>\`;
+    ns.parentNode.insertBefore(greeting, ns);
+  });
 }
 
 // ============ STATE ============
@@ -527,7 +506,7 @@ let lang = 'en';
 let studentId = null;
 let studentName = '';
 let studentLevel = 'intermediate';
-let selectedLevel = null;
+let selectedLevel = 'intermediate'; // default level
 let sessionMessages = 0;
 let sessionStartTime = null;
 let pendingMessages = 0;
@@ -596,20 +575,19 @@ function selectLevel(level) {
 function checkReady() {
   const name = TG_NAME || document.getElementById('nameInput')?.value.trim() || '';
   const btn = document.getElementById('startBtn');
-  if (name.length >= 1 && selectedLevel) {
+  if (name.length >= 1) {
     btn.classList.add('ready');
     btn.style.pointerEvents = 'all';
   } else {
     btn.classList.remove('ready');
   }
 }
-// Run on load in case TG_NAME is already available
+// Run on load
 checkReady();
 
 async function startSession() {
   const name = TG_NAME || document.getElementById('nameInput').value.trim();
   if (!name) { document.getElementById('welcomeError').textContent = 'Please enter your name.'; return; }
-  if (!selectedLevel) { document.getElementById('welcomeError').textContent = 'Please select your level.'; return; }
 
   const btn = document.getElementById('startBtn');
   btn.textContent = 'Starting...';
@@ -1011,24 +989,4 @@ function drawFrame() {
     ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
   }
 
-  const DIST = 55 + energy*28 + burstSpread*150;
-  for(let i=0;i<nodes.length;i++){
-    for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j];
-      const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<DIST){
-        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=`rgba(80,40,200,${(1-d/DIST)*(0.35+energy*0.35)})`;
-        ctx.lineWidth=0.6+energy*0.4; ctx.stroke();
-      }
-    }
-  }
-
-  nodes.forEach(n=>{
-    const g=Math.sin(n.pulse)*0.35+0.65;
-    const nr=n.r*(1+energy*0.5);
-    const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,nr*5);
-    ng.addColorStop(0,`rgba(80,40,200,${0.18*g*gm})`);
-    ng.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(n.x,n.y,nr*5,0,Math.PI*2); ctx.fillStyle=ng; ctx.fill();
-    ctx.beginPa
+  const DIST = 55 + energy*28 
