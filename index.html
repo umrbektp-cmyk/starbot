@@ -537,7 +537,8 @@ let safiyaSpeaking = false;
 let recognition = null;
 let energy = 0;
 let targetEnergy = 0;
-let burstEnergy = 0;
+let burstSpread = 0;    // 0 = nodes inside circle, 1 = nodes fully spread out
+let burstSpreadTarget = 0;
 let currentAudio = null;
 let finalTranscript = '';
 
@@ -790,7 +791,7 @@ function speakDone() {
 async function speak(text) {
   window.speechSynthesis.cancel();
   const clean = stripEmojis(text);
-  safiyaSpeaking = true; targetEnergy = 1; burstEnergy = 1.0;
+  safiyaSpeaking = true; targetEnergy = 1; burstSpreadTarget = 1;
   const tog = document.getElementById('slideToggle'); tog.classList.remove('on','listening'); tog.classList.add('speaking');
   setStatus(lang === 'en' ? 'Safiya is speaking...' : 'Safiya gapirmoqda...', true);
 
@@ -933,13 +934,15 @@ function buildNodes() {
     nodes.push({
       bx: cx + Math.cos(angle) * dist, by: cy + Math.sin(angle) * dist,
       x: 0, y: 0,
-      vx: 0, vy: 0,
       orbitA: Math.random() * Math.PI * 2,
       orbitS: (Math.random() - 0.5) * 0.006 + (Math.random() > 0.5 ? 0.004 : -0.004),
       orbitR: Math.random() * 12 + 2,
       r: Math.random() * 2 + 0.8,
       pulse: Math.random() * Math.PI * 2,
-      pulseS: Math.random() * 0.04 + 0.02
+      pulseS: Math.random() * 0.04 + 0.02,
+      // Burst target: each node flies to a unique spot 1.5–3x orb radius out
+      burstTx: cx + Math.cos(angle) * (ORB_R * (1.6 + Math.random() * 1.4)),
+      burstTy: cy + Math.sin(angle) * (ORB_R * (1.6 + Math.random() * 1.4))
     });
   }
   ringNodes = [];
@@ -954,9 +957,10 @@ function ease(v, t, s) { return v + (t - v) * s; }
 function drawFrame() {
   ctx.clearRect(0, 0, W, H);
   energy = ease(energy, targetEnergy, 0.035);
-  burstEnergy *= 0.985; // slow decay — stays spread for ~3 seconds
-  const sm = 1 + energy * 3.5 + burstEnergy * 5;
-  const gm = 1 + energy * 1.5 + burstEnergy * 2;
+  // Smoothly animate spread: 0=inside, 1=fully spread out
+  burstSpread += (burstSpreadTarget - burstSpread) * 0.018;
+  const sm = 1 + energy * 3.5;
+  const gm = 1 + energy * 1.5 + burstSpread * 2;
 
   const og = ctx.createRadialGradient(cx, cy, 0, cx, cy, ORB_R * 1.4);
   og.addColorStop(0, `rgba(100,50,220,${0.12*gm})`);
@@ -970,7 +974,7 @@ function drawFrame() {
   ctx.lineWidth = 1.5; ctx.stroke();
 
   ringNodes.forEach((rn, i) => {
-    rn.angle += rn.speed * sm * (i%2===0?1:-1) + (burstEnergy * 0.04 * (i%2===0?1:-1));
+    rn.angle += rn.speed * sm * (i%2===0?1:-1) + (burstSpread * 0.04 * (i%2===0?1:-1));
     rn.pulse += 0.03 * sm;
     const px = cx + Math.cos(rn.angle)*rn.r;
     const py = cy + Math.sin(rn.angle)*rn.r;
@@ -983,26 +987,14 @@ function drawFrame() {
     ctx.fillStyle=`rgba(100,60,220,${0.65*g})`; ctx.fill();
   });
 
-  // Set burst target offsets once when burst starts
-  if (burstEnergy > 0.97) {
-    nodes.forEach(n => {
-      const dx = n.bx - cx, dy = n.by - cy;
-      const d = Math.sqrt(dx*dx+dy*dy) || 1;
-      // Each node flies out 1.5x to 3x the orb radius from its base
-      const reach = ORB_R * (1.5 + Math.random() * 1.5);
-      n.burstTx = cx + (dx/d) * reach;
-      n.burstTy = cy + (dy/d) * reach;
-    });
-  }
-
   nodes.forEach(n => {
     n.orbitA += n.orbitS*sm; n.pulse += n.pulseS*sm;
     const bx2 = n.bx + Math.cos(n.orbitA)*n.orbitR;
     const by2 = n.by + Math.sin(n.orbitA)*n.orbitR;
-    if (burstEnergy > 0.02 && n.burstTx !== undefined) {
-      // Lerp between burst target and orbit position based on burstEnergy
-      n.x = bx2 + (n.burstTx - bx2) * burstEnergy;
-      n.y = by2 + (n.burstTy - by2) * burstEnergy;
+    if (burstSpread > 0.01) {
+      // Nodes fly OUT: lerp from base (spread=0) to burst target (spread=1)
+      n.x = bx2 + (n.burstTx - bx2) * burstSpread;
+      n.y = by2 + (n.burstTy - by2) * burstSpread;
     } else {
       n.x = bx2; n.y = by2;
       const dx=n.x-cx,dy=n.y-cy,d=Math.sqrt(dx*dx+dy*dy);
@@ -1011,11 +1003,11 @@ function drawFrame() {
   });
 
   ctx.save();
-  if (burstEnergy < 0.02) {
+  if (burstSpread < 0.05) {
     ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
   }
 
-  const DIST = 55 + energy*28 + burstEnergy*120;
+  const DIST = 55 + energy*28 + burstSpread*150;
   for(let i=0;i<nodes.length;i++){
     for(let j=i+1;j<nodes.length;j++){
       const a=nodes[i],b=nodes[j];
@@ -1035,37 +1027,4 @@ function drawFrame() {
     ng.addColorStop(0,`rgba(80,40,200,${0.18*g*gm})`);
     ng.addColorStop(1,'rgba(0,0,0,0)');
     ctx.beginPath(); ctx.arc(n.x,n.y,nr*5,0,Math.PI*2); ctx.fillStyle=ng; ctx.fill();
-    ctx.beginPath(); ctx.arc(n.x,n.y,nr,0,Math.PI*2);
-    ctx.fillStyle=`rgba(80,50,210,${0.75+0.25*g})`; ctx.fill();
-  });
-
-  ctx.restore();
-
-  ctx.save();
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-
-  ctx.font='bold 56px Inter, Georgia, serif';
-  ctx.shadowColor=`rgba(80,40,200,${0.5+energy*0.3})`;
-  ctx.shadowBlur=22+energy*20;
-  ctx.fillStyle='#2a1a6e';
-  ctx.fillText('Safiya AI', cx, cy-14);
-  ctx.shadowBlur=0;
-
-  ctx.font='500 15px Inter, Georgia, serif';
-  ctx.shadowColor='rgba(80,40,200,0.4)';
-  ctx.shadowBlur=10+energy*8;
-  ctx.fillStyle=`rgba(80,60,180,${0.75+energy*0.15})`;
-  ctx.fillText('by Umrbektp', cx, cy+26);
-  ctx.shadowBlur=0;
-  ctx.restore();
-
-  requestAnimationFrame(drawFrame);
-}
-
-window.addEventListener('resize', initCanvas);
-initCanvas();
-drawFrame();
-</script>
-</body>
-</html>
+    ctx.beginPa
