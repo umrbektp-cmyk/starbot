@@ -954,7 +954,7 @@ function ease(v, t, s) { return v + (t - v) * s; }
 function drawFrame() {
   ctx.clearRect(0, 0, W, H);
   energy = ease(energy, targetEnergy, 0.035);
-  burstEnergy *= 0.96; // burst decays slowly
+  burstEnergy *= 0.985; // slow decay — stays spread for ~3 seconds
   const sm = 1 + energy * 3.5 + burstEnergy * 5;
   const gm = 1 + energy * 1.5 + burstEnergy * 2;
 
@@ -983,40 +983,39 @@ function drawFrame() {
     ctx.fillStyle=`rgba(100,60,220,${0.65*g})`; ctx.fill();
   });
 
-  // On burst start, fire nodes outward
-  if (burstEnergy > 0.95) {
+  // Set burst target offsets once when burst starts
+  if (burstEnergy > 0.97) {
     nodes.forEach(n => {
       const dx = n.bx - cx, dy = n.by - cy;
       const d = Math.sqrt(dx*dx+dy*dy) || 1;
-      const speed = 8 + Math.random() * 14;
-      n.vx = (dx/d) * speed;
-      n.vy = (dy/d) * speed;
+      // Each node flies out 1.5x to 3x the orb radius from its base
+      const reach = ORB_R * (1.5 + Math.random() * 1.5);
+      n.burstTx = cx + (dx/d) * reach;
+      n.burstTy = cy + (dy/d) * reach;
     });
   }
 
   nodes.forEach(n => {
     n.orbitA += n.orbitS*sm; n.pulse += n.pulseS*sm;
-    // Base orbit position
     const bx2 = n.bx + Math.cos(n.orbitA)*n.orbitR;
     const by2 = n.by + Math.sin(n.orbitA)*n.orbitR;
-    // Apply burst velocity
-    n.vx *= 0.88; n.vy *= 0.88;
-    n.x = bx2 + n.vx * burstEnergy * 6;
-    n.y = by2 + n.vy * burstEnergy * 6;
-    // Clamp inside circle only when NOT bursting
-    if (burstEnergy < 0.05) {
+    if (burstEnergy > 0.02 && n.burstTx !== undefined) {
+      // Lerp between burst target and orbit position based on burstEnergy
+      n.x = bx2 + (n.burstTx - bx2) * burstEnergy;
+      n.y = by2 + (n.burstTy - by2) * burstEnergy;
+    } else {
+      n.x = bx2; n.y = by2;
       const dx=n.x-cx,dy=n.y-cy,d=Math.sqrt(dx*dx+dy*dy);
       if(d>ORB_R-4){n.x=cx+(dx/d)*(ORB_R-4);n.y=cy+(dy/d)*(ORB_R-4);}
     }
   });
 
   ctx.save();
-  // Only clip inside circle when not bursting
-  if (burstEnergy < 0.05) {
+  if (burstEnergy < 0.02) {
     ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
   }
 
-  const DIST = 55 + energy*28 + burstEnergy*80;
+  const DIST = 55 + energy*28 + burstEnergy*120;
   for(let i=0;i<nodes.length;i++){
     for(let j=i+1;j<nodes.length;j++){
       const a=nodes[i],b=nodes[j];
