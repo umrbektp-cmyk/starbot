@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+<title>Safiya AI — Speaking Practice | Premier Tutoring Center</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(160deg,#f0f4ff 0%,#fafbff 60%,#f4f0ff 100%);
+    color: #1a1a2e;
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+  .blob-1 { width: 600px; height: 600px; background: rgba(124,58,237,0.08); top: -150px; left: -150px; }
+  .blob-2 { width: 500px; height: 500px; background: rgba(37,99,235,0.06); bottom: -100px; right: -100px; }
+  .blob-3 { width: 350px; height: 350px; background: rgba(139,92,246,0.05); top: 40%; left: 50%; transform: translate(-50%,-50%); }
+
+  canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+  /* ============ WELCOME SCREEN ============ */
+  #welcomeScreen {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: rgba(240,244,255,0.85);
+    backdrop-filter: blur(8px);
+    transition: opacity 0.5s;
+  }
+  #welcomeScreen.fade-out { opacity: 0; pointer-events: none; }
+
+  .welcome-card {
+    background: rgba(255,255,255,0.95);
+    border: 0.5px solid rgba(100,80,200,0.15);
+    box-shadow: 0 8px 40px rgba(100,80,200,0.12);
+    border-radius: 28px;
+    padding: 36px 32px 32px;
+    width: 100%; max-width: 460px;
+    display: flex; flex-direction: column; gap: 20px;
+    backdrop-filter: blur(20px);
+  }
+
+  .welcome-brand {
+    text-align: center;
+  }
+  .welcome-brand h1 {
+    font-size: 28px; font-weight: 700; letter-spacing: 0.08em;
+    background: linear-gradient(90deg, #c4b5fd, #93c5fd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .welcome-brand p {
+    font-size: 11px; color: rgba(255,255,255,0.35);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;
+  }
+
+  .welcome-divider { height: 0.5px; background: rgba(255,255,255,0.08); }
+
+  .welcome-label {
+    font-size: 12px; font-weight: 500; color: rgba(80,60,150,0.7);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+  }
+
+  .name-input {
+    width: 100%; padding: 12px 16px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(100,80,200,0.2);
+    border-radius: 14px;
+    color: #1a1a2e; font-size: 15px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .name-input::placeholder { color: rgba(100,80,180,0.4); }
+  .name-input:focus { border-color: rgba(124,58,237,0.6); }
+
+  .level-grid {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .level-btn {
+    width: 100%; padding: 11px 16px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(100,80,200,0.15);
+    border-radius: 12px;
+    color: rgba(60,40,120,0.8); font-size: 14px; font-weight: 500;
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.18s;
+  }
+  .level-btn:hover { background: rgba(255,255,255,0.95); color: #1a1a2e; }
+  .level-btn.selected { border-color: rgba(124,58,237,0.7); color: #fff; }
+  .level-btn[data-level="beginner"].selected    { background: rgba(34,197,94,0.15);  border-color: rgba(34,197,94,0.5); }
+  .level-btn[data-level="elementary"].selected  { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.5); }
+  .level-btn[data-level="pre-intermediate"].selected { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); }
+  .level-btn[data-level="intermediate"].selected { background: rgba(249,115,22,0.15); border-color: rgba(249,115,22,0.5); }
+  .level-btn[data-level="advanced"].selected    { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.5); }
+
+  .level-dot {
+    width: 8px; height: 8px; border-radius: 50%; opacity: 0.7;
+  }
+  .level-btn[data-level="beginner"] .level-dot    { background: #22c55e; }
+  .level-btn[data-level="elementary"] .level-dot  { background: #3b82f6; }
+  .level-btn[data-level="pre-intermediate"] .level-dot { background: #f59e0b; }
+  .level-btn[data-level="intermediate"] .level-dot { background: #f97316; }
+  .level-btn[data-level="advanced"] .level-dot    { background: #8b5cf6; }
+
+  .level-desc {
+    font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 400;
+  }
+
+  .start-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    border: none; border-radius: 14px;
+    color: #fff; font-size: 15px; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    transition: all 0.2s; opacity: 0.4; pointer-events: none;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+  }
+  .start-btn.ready { opacity: 1; pointer-events: all; }
+  .start-btn.ready:hover { transform: scale(1.02); box-shadow: 0 6px 28px rgba(124,58,237,0.55); }
+
+  .welcome-error {
+    font-size: 12px; color: rgba(200,50,50,0.9);
+    text-align: center; min-height: 16px;
+  }
+
+  /* ============ HEADER ============ */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid rgba(100,80,200,0.1);
+  }
+
+  .header-left { display: flex; flex-direction: column; gap: 2px; }
+  .brand-name {
+    font-size: 14px; font-weight: 600; letter-spacing: 0.12em;
+    background: linear-gradient(90deg, #c4b5fd, #93c5fd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .brand-sub { font-size: 9px; color: rgba(80,60,150,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .level-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+    display: none;
+  }
+  .level-badge.show { display: block; }
+  .level-badge.beginner    { background: rgba(34,197,94,0.2);  color: #86efac; border: 0.5px solid rgba(34,197,94,0.3); }
+  .level-badge.elementary  { background: rgba(59,130,246,0.2); color: #93c5fd; border: 0.5px solid rgba(59,130,246,0.3); }
+  .level-badge.pre-intermediate { background: rgba(245,158,11,0.2); color: #fde68a; border: 0.5px solid rgba(245,158,11,0.3); }
+  .level-badge.intermediate { background: rgba(249,115,22,0.2); color: #fdba74; border: 0.5px solid rgba(249,115,22,0.3); }
+  .level-badge.advanced    { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 0.5px solid rgba(139,92,246,0.3); }
+
+  .rank-btn {
+    background: rgba(100,80,200,0.08); border: 0.5px solid rgba(100,80,200,0.2);
+    border-radius: 20px; padding: 5px 14px;
+    color: rgba(80,60,150,0.9); font-size: 12px; font-weight: 500;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s;
+    display: none;
+  }
+  .rank-btn.show { display: block; }
+  .rank-btn:hover { background: rgba(100,80,200,0.15); color: #5030b0; }
+
+  .change-btn {
+    background: transparent; border: none;
+    color: rgba(100,80,180,0.4); font-size: 10px;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: color 0.2s;
+    display: none; letter-spacing: 0.04em;
+  }
+  .change-btn.show { display: block; }
+  .change-btn:hover { color: rgba(80,60,160,0.8); }
+
+  .lang-toggle {
+    display: flex; gap: 3px;
+    background: rgba(255,255,255,0.05); padding: 3px; border-radius: 20px;
+    border: 0.5px solid rgba(255,255,255,0.09);
+  }
+  .lang-btn {
+    background: transparent; border: none; color: rgba(255,255,255,0.4);
+    padding: 4px 12px; border-radius: 16px; font-size: 11px;
+    font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn.active { background: rgba(124,58,237,0.45); color: #fff; }
+
+  /* ============ MAIN UI ============ */
+  .ui {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column; align-items: center;
+    height: 100vh; justify-content: flex-end; padding-bottom: 32px;
+  }
+
+  .chat-card {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(100,80,200,0.12);
+    box-shadow: 0 8px 40px rgba(100,80,200,0.10);
+    border-radius: 28px;
+    padding: 18px 22px 20px;
+    width: 92vw; max-width: 500px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .transcript {
+    min-height: 28px; font-size: 13px;
+    color: rgba(80,60,180,0.7); font-style: italic;
+    line-height: 1.6; text-align: center;
+  }
+  .sep { height: 0.5px; background: rgba(100,80,200,0.12); }
+  .reply {
+    min-height: 42px; font-size: 15px; color: #1a1a2e;
+    line-height: 1.7; text-align: center;
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .reply.visible { opacity: 1; }
+
+  .mic-area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  .mic-btn {
+    width: 64px; height: 64px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.45);
+  }
+  .mic-btn:hover { transform: scale(1.06); }
+  .mic-btn.listening { background: linear-gradient(135deg, #1d4ed8, #0891b2); animation: pulse-btn 1.2s infinite; }
+  .mic-btn.speaking-back { background: linear-gradient(135deg, #059669, #0891b2); box-shadow: 0 4px 24px rgba(5,150,105,0.45); }
+
+  @keyframes pulse-btn {
+    0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.6); }
+    70%  { box-shadow: 0 0 0 20px rgba(37,99,235,0); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+  }
+
+  .mic-icon { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .status-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(100,80,180,0.6); min-height: 16px; }
+  .status-label.active { color: rgba(80,60,200,1); }
+  .error-msg { font-size: 12px; color: rgba(200,50,50,0.9); text-align: center; max-width: 380px; line-height: 1.5; }
+
+  /* ============ LEADERBOARD MODAL ============ */
+  #lbModal {
+    position: fixed; inset: 0; z-index: 40;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+    background: rgba(240,244,255,0.92);
+    backdrop-filter: blur(10px);
+  }
+  #lbModal.show { display: flex; }
+
+  .lb-card {
+    background: rgba(255,255,255,0.97);
+    border: 0.5px solid rgba(100,80,200,0.15);
+    box-shadow: 0 8px 40px rgba(100,80,200,0.12);
+    border-radius: 28px;
+    width: 100%; max-width: 480px;
+    max-height: 80vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+  }
+
+  .lb-header {
+    padding: 20px 24px 16px;
+    border-bottom: 0.5px solid rgba(100,80,200,0.1);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lb-title { font-size: 16px; font-weight: 600; letter-spacing: 0.04em; color: #1a1a2e; }
+  .lb-close {
+    background: rgba(100,80,200,0.08); border: none;
+    color: rgba(80,60,150,0.7); width: 30px; height: 30px;
+    border-radius: 50%; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .lb-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  .lb-list {
+    overflow-y: auto; padding: 12px 16px 16px; flex: 1;
+  }
+  .lb-list::-webkit-scrollbar { width: 4px; }
+  .lb-list::-webkit-scrollbar-track { background: transparent; }
+  .lb-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+  .lb-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 14px; margin-bottom: 6px;
+    background: rgba(248,248,255,0.9);
+    border: 0.5px solid rgba(100,80,200,0.1);
+    transition: background 0.2s;
+  }
+  .lb-row:hover { background: rgba(240,235,255,0.95); }
+  .lb-row.top-1 { background: rgba(255,215,0,0.08);  border-color: rgba(255,215,0,0.2); }
+  .lb-row.top-2 { background: rgba(192,192,192,0.07); border-color: rgba(192,192,192,0.2); }
+  .lb-row.top-3 { background: rgba(205,127,50,0.07);  border-color: rgba(205,127,50,0.2); }
+
+  .lb-rank {
+    font-size: 16px; width: 28px; text-align: center; flex-shrink: 0;
+  }
+  .lb-info { flex: 1; min-width: 0; }
+  .lb-name { font-size: 14px; font-weight: 500; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  .lb-badge {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 10px; text-transform: uppercase; flex-shrink: 0;
+  }
+  .lb-badge.beginner    { background: rgba(34,197,94,0.2);  color: #86efac; }
+  .lb-badge.elementary  { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .lb-badge.pre-intermediate { background: rgba(245,158,11,0.2); color: #fde68a; }
+  .lb-badge.intermediate { background: rgba(249,115,22,0.2); color: #fdba74; }
+  .lb-badge.advanced    { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+
+  .lb-msgs { font-size: 13px; font-weight: 600; color: rgba(100,60,200,0.9); flex-shrink: 0; }
+
+  .lb-empty { text-align: center; color: rgba(100,80,160,0.5); font-size: 14px; padding: 40px 0; }
+  .lb-loading { text-align: center; color: rgba(100,80,160,0.5); font-size: 13px; padding: 30px 0; }
+
+  /* ============ SLIDE TOGGLE ============ */
+  .slide-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+  .slide-toggle {
+    position: relative; width: 160px; height: 56px;
+    background: #d1d5e8; border-radius: 28px;
+    cursor: pointer; transition: background 0.35s;
+    border: 2px solid rgba(100,80,200,0.15);
+    box-shadow: 0 2px 12px rgba(100,80,200,0.1);
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  .slide-toggle.on { background: linear-gradient(135deg,#7c3aed,#2563eb); border-color: transparent; box-shadow: 0 4px 20px rgba(124,58,237,0.4); }
+  .slide-toggle.listening { background: linear-gradient(135deg,#1d4ed8,#0891b2); border-color: transparent; }
+  .slide-toggle.speaking { background: linear-gradient(135deg,#059669,#0891b2); border-color: transparent; box-shadow: 0 4px 20px rgba(5,150,105,0.4); }
+
+  .slide-handle {
+    position: absolute; width: 48px; height: 48px;
+    background: #fff; border-radius: 50%; top: 2px; left: 2px;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .slide-toggle.on .slide-handle,
+  .slide-toggle.listening .slide-handle,
+  .slide-toggle.speaking .slide-handle { transform: translateX(104px); }
+
+  .slide-handle svg { width: 22px; height: 22px; }
+  .slide-toggle:not(.on):not(.listening):not(.speaking) .slide-handle svg { stroke: #7c3aed; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .slide-toggle.on .slide-handle svg,
+  .slide-toggle.listening .slide-handle svg { stroke: #2563eb; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .slide-toggle.speaking .slide-handle svg { stroke: #059669; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .slide-label-row { display: flex; align-items: center; justify-content: space-between; padding: 0 14px; position: absolute; inset: 0; pointer-events: none; }
+  .slide-label-off { font-size: 10px; font-weight: 600; color: rgba(100,80,180,0.6); letter-spacing: 0.05em; text-transform: uppercase; }
+  .slide-label-on  { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0); letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.3s; }
+  .slide-toggle.on  .slide-label-on  { color: rgba(255,255,255,0.85); }
+  .slide-toggle.on  .slide-label-off { color: rgba(255,255,255,0); }
+  .slide-toggle.listening .slide-label-on  { color: rgba(255,255,255,0.85); }
+  .slide-toggle.listening .slide-label-off { color: rgba(255,255,255,0); }
+  .slide-toggle.speaking .slide-label-on  { color: rgba(255,255,255,0.85); }
+  .slide-toggle.speaking .slide-label-off { color: rgba(255,255,255,0); }
+
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<canvas id="c"></canvas>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen">
+  <div class="welcome-card">
+    <div class="welcome-brand">
+      <h1>SAFIYA AI</h1>
+      <p>Premier Tutoring Center · English Practice</p>
+    </div>
+
+    <div class="welcome-divider"></div>
+
+    <div id="nameSection">
+      <div class="welcome-label">Your name</div>
+      <input class="name-input" id="nameInput" type="text" placeholder="Enter your name..." maxlength="40" oninput="checkReady()" />
+    </div>
+
+    <div>
+      <div class="welcome-label">Choose your level</div>
+      <div class="level-grid">
+        <button class="level-btn" data-level="beginner" onclick="selectLevel('beginner')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="level-dot"></span>Beginner
+          </span>
+          <span class="level-desc">A1 · Complete beginner</span>
+        </button>
+        <button class="level-btn" data-level="elementary" onclick="selectLevel('elementary')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="level-dot"></span>Elementary
+          </span>
+          <span class="level-desc">A2 · Basic English</span>
+        </button>
+        <button class="level-btn" data-level="pre-intermediate" onclick="selectLevel('pre-intermediate')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="level-dot"></span>Pre-Intermediate
+          </span>
+          <span class="level-desc">B1 · Getting there</span>
+        </button>
+        <button class="level-btn" data-level="intermediate" onclick="selectLevel('intermediate')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="level-dot"></span>Intermediate
+          </span>
+          <span class="level-desc">B2 · Comfortable conversations</span>
+        </button>
+        <button class="level-btn" data-level="advanced" onclick="selectLevel('advanced')">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="level-dot"></span>Advanced
+          </span>
+          <span class="level-desc">C1/C2 · Near fluent</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn" onclick="startSession()">Start Practice →</button>
+    <div class="welcome-error" id="welcomeError"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD MODAL -->
+<div id="lbModal">
+  <div class="lb-card">
+    <div class="lb-header">
+      <div class="lb-title">🏆 Leaderboard</div>
+      <button class="lb-close" onclick="hideLeaderboard()">✕</button>
+    </div>
+    <div class="lb-list" id="lbList">
+      <div class="lb-loading">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="brand-name">SAFIYA AI</div>
+    <div class="brand-sub">Premier Tutoring Center</div>
+  </div>
+  <div class="header-right">
+    <span class="level-badge" id="levelBadge"></span>
+    <button class="rank-btn" id="rankBtn" onclick="showLeaderboard()">🏆 Rank</button>
+    <button class="change-btn" id="changeBtn" onclick="changeUser()" title="Switch user">change</button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-uz" onclick="setLang('uz')">UZ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CHAT UI -->
+<div class="ui">
+  <div class="chat-card">
+    <div class="transcript" id="transcript">Choose your level to start...</div>
+    <div class="sep"></div>
+    <div class="reply" id="reply"></div>
+    <div class="mic-area">
+      <div class="slide-wrap">
+        <div class="slide-toggle" id="slideToggle" onclick="toggleMic()">
+          <div class="slide-label-row">
+            <span class="slide-label-off">OFF</span>
+            <span class="slide-label-on">ON</span>
+          </div>
+          <div class="slide-handle">
+            <svg viewBox="0 0 24 24">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+              <line x1="9" y1="21" x2="15" y2="21"/>
+            </svg>
+          </div>
+        </div>
+        <div class="status-label" id="statusLabel">Slide to speak</div>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE_URL = 'https://safiya-ai-proxy-production.up.railway.app';
+const PROXY_URL = BASE_URL + '/chat';
+
+// ============ TELEGRAM SETUP ============
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand(); // full screen
+  tg.BackButton.onClick(() => tg.close());
+}
+
+const TG_USER = tg?.initDataUnsafe?.user || null;
+const TG_NAME = TG_USER ? (TG_USER.first_name + (TG_USER.last_name ? ' ' + TG_USER.last_name : '')) : null;
+const TG_ID   = TG_USER ? String(TG_USER.id) : null;
+
+// If coming from Telegram: hide name input, show greeting instead
+if (TG_NAME) {
+  const ns = document.getElementById('nameSection');
+  if (ns) ns.style.display = 'none';
+
+  const greeting = document.createElement('div');
+  greeting.style.cssText = 'text-align:center;padding:4px 0 2px';
+  greeting.innerHTML = `<span style="font-size:15px;font-weight:600;color:#c4b5fd">Hey, ${TG_USER.first_name}!</span><br><span style="font-size:12px;color:rgba(255,255,255,0.4)">Pick your level to start</span>`;
+  ns.parentNode.insertBefore(greeting, ns);
+}
+
+// ============ STATE ============
+let lang = 'en';
+let studentId = null;
+let studentName = '';
+let studentLevel = 'intermediate';
+let selectedLevel = null;
+let sessionMessages = 0;
+let sessionStartTime = null;
+let pendingMessages = 0;
+
+let listening = false;
+let safiyaSpeaking = false;
+let recognition = null;
+let energy = 0;
+let targetEnergy = 0;
+let burstEnergy = 0;
+let currentAudio = null;
+let finalTranscript = '';
+
+// ============ AUTO LOGIN FROM LOCALSTORAGE ============
+function applySession(id, name, level) {
+  studentId = id;
+  studentName = name;
+  studentLevel = level;
+  sessionStartTime = Date.now();
+
+  const badge = document.getElementById('levelBadge');
+  const levelLabels = {
+    'beginner': 'Beginner', 'elementary': 'Elementary',
+    'pre-intermediate': 'Pre-Int', 'intermediate': 'Intermediate', 'advanced': 'Advanced'
+  };
+  badge.textContent = levelLabels[level] || level;
+  badge.className = 'level-badge show ' + level;
+  document.getElementById('rankBtn').classList.add('show');
+  document.getElementById('changeBtn').classList.add('show');
+
+  document.getElementById('transcript').textContent = `Hi ${name}! Slide the button to start speaking...`;
+  setStatus('Slide to speak');
+
+  const ws = document.getElementById('welcomeScreen');
+  ws.style.display = 'none';
+}
+
+(function checkSavedSession() {
+  try {
+    // Use Telegram-specific key if available so each TG user has their own save
+    const storageKey = TG_ID ? `safiya_student_${TG_ID}` : 'safiya_student';
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return;
+    const s = JSON.parse(saved);
+    if (s && s.id && s.name && s.level) {
+      applySession(s.id, s.name, s.level);
+    }
+  } catch(e) {}
+})();
+
+function changeUser() {
+  if (!confirm('Switch to a different name? This will log you out on this device.')) return;
+  localStorage.removeItem('safiya_student');
+  location.reload();
+}
+
+// ============ WELCOME SCREEN ============
+function selectLevel(level) {
+  selectedLevel = level;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.level-btn[data-level="${level}"]`).classList.add('selected');
+  checkReady();
+}
+
+function checkReady() {
+  const name = TG_NAME || document.getElementById('nameInput').value.trim();
+  const btn = document.getElementById('startBtn');
+  if (name.length >= 1 && selectedLevel) {
+    btn.classList.add('ready');
+  } else {
+    btn.classList.remove('ready');
+  }
+}
+
+async function startSession() {
+  const name = TG_NAME || document.getElementById('nameInput').value.trim();
+  if (!name || !selectedLevel) return;
+
+  const btn = document.getElementById('startBtn');
+  btn.textContent = 'Starting...';
+  btn.style.opacity = '0.7';
+
+  try {
+    const res = await fetch(BASE_URL + '/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, level: selectedLevel })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Save to localStorage so next visit skips the welcome screen
+    const storageKey = TG_ID ? `safiya_student_${TG_ID}` : 'safiya_student';
+    localStorage.setItem(storageKey, JSON.stringify({
+      id: data.id, name: data.name, level: data.level
+    }));
+
+    // Fade out welcome then apply session
+    const ws = document.getElementById('welcomeScreen');
+    ws.classList.add('fade-out');
+    setTimeout(() => { applySession(data.id, data.name, data.level); }, 500);
+
+  } catch(e) {
+    document.getElementById('welcomeError').textContent = 'Error: ' + e.message;
+    btn.textContent = 'Start Practice →';
+    btn.style.opacity = '';
+  }
+}
+
+// ============ LEADERBOARD ============
+async function showLeaderboard() {
+  document.getElementById('lbModal').classList.add('show');
+  document.getElementById('lbList').innerHTML = '<div class="lb-loading">Loading rankings...</div>';
+
+  try {
+    const res = await fetch(BASE_URL + '/leaderboard');
+    const students = await res.json();
+
+    if (!students || students.length === 0) {
+      document.getElementById('lbList').innerHTML = '<div class="lb-empty">No students yet. Be the first!</div>';
+      return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+    const levelLabels = {
+      'beginner': 'Beginner', 'elementary': 'Elementary',
+      'pre-intermediate': 'Pre-Int', 'intermediate': 'Intermediate', 'advanced': 'Advanced'
+    };
+
+    const html = students.map((s, i) => {
+      const rank = i + 1;
+      const rankDisplay = rank <= 3 ? medals[i] : `#${rank}`;
+      const topClass = rank <= 3 ? ` top-${rank}` : '';
+      const mins = Math.round(parseFloat(s.minutes_spent || 0));
+      const timeStr = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+      return `
+        <div class="lb-row${topClass}">
+          <div class="lb-rank">${rankDisplay}</div>
+          <div class="lb-info">
+            <div class="lb-name">${escapeHtml(s.name)}</div>
+            <div class="lb-meta">${timeStr} practice time</div>
+          </div>
+          <span class="lb-badge ${s.level}">${levelLabels[s.level] || s.level}</span>
+          <div class="lb-msgs">${s.messages_sent || 0} msgs</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('lbList').innerHTML = html;
+  } catch(e) {
+    document.getElementById('lbList').innerHTML = '<div class="lb-empty">Could not load leaderboard.</div>';
+  }
+}
+
+function hideLeaderboard() {
+  document.getElementById('lbModal').classList.remove('show');
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============ ACTIVITY LOGGING ============
+async function logActivity(msgs, mins) {
+  if (!studentId || (msgs === 0 && mins === 0)) return;
+  try {
+    await fetch(BASE_URL + '/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, messages: msgs, minutes: mins })
+    });
+  } catch(e) {}
+}
+
+function logBeacon() {
+  if (!studentId || pendingMessages === 0) return;
+  const mins = sessionStartTime ? (Date.now() - sessionStartTime) / 60000 : 0;
+  navigator.sendBeacon(BASE_URL + '/log', JSON.stringify({
+    studentId, messages: pendingMessages, minutes: parseFloat(mins.toFixed(2))
+  }));
+}
+
+window.addEventListener('beforeunload', logBeacon);
+
+// ============ LANG ============
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.getElementById('btn-uz').classList.toggle('active', l === 'uz');
+}
+
+function setStatus(text, active=false) {
+  const el = document.getElementById('statusLabel');
+  el.textContent = text;
+  el.classList.toggle('active', active);
+}
+function setError(msg) { document.getElementById('errorMsg').textContent = msg; }
+
+// ============ CHAT ============
+async function sendToSafiya(text) {
+  if (!studentId) return;
+  setError('');
+  try {
+    setStatus(lang === 'en' ? 'Safiya is thinking...' : 'Safiya o\'ylayapti...', true);
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, language: lang, level: studentLevel })
+    });
+    const data = await res.json();
+    if (data.error) { setError('Error: ' + data.error); setStatus('Slide to speak'); return; }
+
+    const replyEl = document.getElementById('reply');
+    replyEl.textContent = data.reply;
+    replyEl.classList.add('visible');
+
+    // Track activity
+    sessionMessages++;
+    pendingMessages++;
+    if (pendingMessages >= 5) {
+      const mins = sessionStartTime ? (Date.now() - sessionStartTime) / 60000 : 0;
+      await logActivity(pendingMessages, parseFloat(mins.toFixed(2)));
+      pendingMessages = 0;
+      sessionStartTime = Date.now(); // reset timer after each log
+    }
+
+    speak(data.reply);
+  } catch(e) {
+    setError('Could not reach Safiya.');
+    setStatus('Slide to speak');
+    targetEnergy = 0;
+  }
+}
+
+// ============ VOICE ============
+function stripEmojis(text) {
+  return text.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{2300}-\u{23FF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]/gu, '')
+             .replace(/[*_~`#]/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+function getBestFemaleVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = ['Microsoft Jenny','Microsoft Aria','Microsoft Emma','Google US English','Samantha','Karen','Moira','Microsoft Zira'];
+  for (const name of preferred) { const v = voices.find(v => v.name.includes(name)); if (v) return v; }
+  return voices.find(v => v.lang === 'en-US') || null;
+}
+
+function stopSafiya() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  window.speechSynthesis.cancel();
+  safiyaSpeaking = false; targetEnergy = 0;
+  document.getElementById('slideToggle').classList.remove('speaking','on','listening');
+}
+
+function speakDone() {
+  safiyaSpeaking = false; targetEnergy = 0;
+  document.getElementById('slideToggle').classList.remove('speaking','on','listening');
+  setStatus(lang === 'en' ? 'Slide to speak' : 'Siljiting va gapiring');
+}
+
+async function speak(text) {
+  window.speechSynthesis.cancel();
+  const clean = stripEmojis(text);
+  safiyaSpeaking = true; targetEnergy = 1; burstEnergy = 1.0;
+  const tog = document.getElementById('slideToggle'); tog.classList.remove('on','listening'); tog.classList.add('speaking');
+  setStatus(lang === 'en' ? 'Safiya is speaking...' : 'Safiya gapirmoqda...', true);
+
+  try {
+    const res = await fetch(BASE_URL + '/tts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean })
+    });
+    if (!res.ok) {
+      const errBody = await res.text();
+      setError('TTS error ' + res.status + ': ' + errBody.substring(0, 80));
+      fallbackSpeak(clean);
+      return;
+    }
+    const blob = await res.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(audioUrl);
+    currentAudio = audio;
+    audio.onended = () => { URL.revokeObjectURL(audioUrl); speakDone(); };
+    audio.onerror = (e) => { URL.revokeObjectURL(audioUrl); setError('Audio play failed'); fallbackSpeak(clean); };
+    await audio.play();
+  } catch (e) {
+    setError('TTS fetch failed: ' + e.message);
+    fallbackSpeak(clean);
+  }
+}
+
+function fallbackSpeak(clean) {
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'en-US'; utter.rate = 0.88; utter.pitch = 1.1;
+  const voice = getBestFemaleVoice();
+  if (voice) utter.voice = voice;
+  utter.onend = () => speakDone();
+  window.speechSynthesis.speak(utter);
+}
+
+// ============ SLIDE TOGGLE ============
+let micOn = false;
+
+function toggleMic() {
+  if (!studentId) { setError('Please choose your level first.'); return; }
+  if (micOn) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+function startListening() {
+  if (safiyaSpeaking) stopSafiya();
+  setError('');
+  finalTranscript = '';
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { setError('Use Chrome or Edge for voice.'); return; }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = lang === 'uz' ? 'uz-UZ' : 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = true; // keep listening until user slides off
+
+  recognition.onstart = () => {
+    micOn = true; listening = true; targetEnergy = 0.6;
+    const tog = document.getElementById('slideToggle');
+    tog.classList.add('on'); tog.classList.add('listening');
+    document.getElementById('transcript').textContent = '';
+    setStatus(lang === 'en' ? 'Listening...' : 'Qulyapman...', true);
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    finalTranscript += final;
+    document.getElementById('transcript').textContent = finalTranscript || interim;
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') {
+      // restart on no-speech so it keeps listening
+      if (micOn) { try { recognition.start(); } catch(err) {} }
+      return;
+    }
+    if (e.error !== 'aborted') setError('Mic: ' + e.error);
+    listening = false;
+  };
+
+  recognition.onend = () => {
+    // If user hasn't slid off, restart to keep continuous
+    if (micOn) {
+      try { recognition.start(); } catch(err) {}
+    } else {
+      listening = false;
+      targetEnergy = 0;
+      const tog = document.getElementById('slideToggle');
+      tog.classList.remove('on'); tog.classList.remove('listening');
+      const text = finalTranscript.trim();
+      if (text) {
+        setStatus('Processing...', true);
+        sendToSafiya(text);
+      } else {
+        setStatus(lang === 'en' ? 'Slide to speak' : 'Siljiting va gapiring');
+      }
+      finalTranscript = '';
+    }
+  };
+
+  try { recognition.start(); } catch(e) { setError('Could not start mic.'); }
+}
+
+function stopListening() {
+  micOn = false;
+  if (recognition) { recognition.stop(); }
+}
+
+window.speechSynthesis.onvoiceschanged = () => {};
+
+// ============ CANVAS ORB ============
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy;
+const ORB_R = 170;
+const NODE_COUNT = 95;
+let nodes = [], ringNodes = [];
+
+function initCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2; cy = H / 2 - 50;
+  buildNodes();
+}
+
+function buildNodes() {
+  nodes = [];
+  for (let i = 0; i < NODE_COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.pow(Math.random(), 0.5) * ORB_R * 0.95;
+    nodes.push({
+      bx: cx + Math.cos(angle) * dist, by: cy + Math.sin(angle) * dist,
+      x: 0, y: 0,
+      orbitA: Math.random() * Math.PI * 2,
+      orbitS: (Math.random() - 0.5) * 0.006 + (Math.random() > 0.5 ? 0.004 : -0.004),
+      orbitR: Math.random() * 12 + 2,
+      r: Math.random() * 2 + 0.8,
+      pulse: Math.random() * Math.PI * 2,
+      pulseS: Math.random() * 0.04 + 0.02
+    });
+  }
+  ringNodes = [];
+  for (let i = 0; i < 34; i++) {
+    const a = (i / 34) * Math.PI * 2;
+    ringNodes.push({ angle: a, speed: 0.003 + Math.random() * 0.003, r: ORB_R + Math.random() * 8 - 4, pulse: Math.random() * Math.PI * 2, size: Math.random() * 1.5 + 0.8 });
+  }
+}
+
+function ease(v, t, s) { return v + (t - v) * s; }
+
+function drawFrame() {
+  ctx.clearRect(0, 0, W, H);
+  energy = ease(energy, targetEnergy, 0.035);
+  burstEnergy *= 0.94; // burst decays
+  const sm = 1 + energy * 3.5 + burstEnergy * 5;
+  const gm = 1 + energy * 1.5 + burstEnergy * 2;
+
+  const og = ctx.createRadialGradient(cx, cy, 0, cx, cy, ORB_R * 1.4);
+  og.addColorStop(0, `rgba(100,50,220,${0.12*gm})`);
+  og.addColorStop(0.5, `rgba(60,40,180,${0.06*gm})`);
+  og.addColorStop(1, 'rgba(100,80,220,0)');
+  ctx.beginPath(); ctx.arc(cx, cy, ORB_R * 1.4, 0, Math.PI*2);
+  ctx.fillStyle = og; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cx, cy, ORB_R, 0, Math.PI*2);
+  ctx.strokeStyle = `rgba(100,60,220,${0.35+energy*0.4})`;
+  ctx.lineWidth = 1.5; ctx.stroke();
+
+  ringNodes.forEach((rn, i) => {
+    rn.angle += rn.speed * sm * (i%2===0?1:-1) + (burstEnergy * 0.04 * (i%2===0?1:-1));
+    rn.pulse += 0.03 * sm;
+    const px = cx + Math.cos(rn.angle)*rn.r;
+    const py = cy + Math.sin(rn.angle)*rn.r;
+    const g = Math.sin(rn.pulse)*0.3+0.7;
+    const rg = ctx.createRadialGradient(px,py,0,px,py,rn.size*4);
+    rg.addColorStop(0,`rgba(100,50,220,${0.25*g*gm})`);
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(px,py,rn.size*4,0,Math.PI*2); ctx.fillStyle=rg; ctx.fill();
+    ctx.beginPath(); ctx.arc(px,py,rn.size,0,Math.PI*2);
+    ctx.fillStyle=`rgba(100,60,220,${0.65*g})`; ctx.fill();
+  });
+
+  nodes.forEach(n => {
+    n.orbitA += n.orbitS*sm + (burstEnergy * 0.03 * Math.sign(n.orbitS)); n.pulse += n.pulseS*sm;
+    n.x = n.bx + Math.cos(n.orbitA)*n.orbitR;
+    n.y = n.by + Math.sin(n.orbitA)*n.orbitR;
+    const dx=n.x-cx,dy=n.y-cy,d=Math.sqrt(dx*dx+dy*dy);
+    if(d>ORB_R-4){n.x=cx+(dx/d)*(ORB_R-4);n.y=cy+(dy/d)*(ORB_R-4);}
+  });
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
+
+  const DIST = 55 + energy*28 + burstEnergy*40;
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j];
+      const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<DIST){
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(80,40,200,${(1-d/DIST)*(0.35+energy*0.35)})`;
+        ctx.lineWidth=0.6+energy*0.4; ctx.stroke();
+      }
+    }
+  }
+
+  nodes.forEach(n=>{
+    const g=Math.sin(n.pulse)*0.35+0.65;
+    const nr=n.r*(1+energy*0.5);
+    const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,nr*5);
+    ng.addColorStop(0,`rgba(80,40,200,${0.18*g*gm})`);
+    ng.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(n.x,n.y,nr*5,0,Math.PI*2); ctx.fillStyle=ng; ctx.fill();
+    ctx.beginPath(); ctx.arc(n.x,n.y,nr,0,Math.PI*2);
+    ctx.fillStyle=`rgba(80,50,210,${0.75+0.25*g})`; ctx.fill();
+  });
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  ctx.font='bold 56px Inter, Georgia, serif';
+  ctx.shadowColor=`rgba(80,40,200,${0.5+energy*0.3})`;
+  ctx.shadowBlur=22+energy*20;
+  ctx.fillStyle='#2a1a6e';
+  ctx.fillText('Safiya AI', cx, cy-14);
+  ctx.shadowBlur=0;
+
+  ctx.font='500 15px Inter, Georgia, serif';
+  ctx.shadowColor='rgba(80,40,200,0.4)';
+  ctx.shadowBlur=10+energy*8;
+  ctx.fillStyle=`rgba(80,60,180,${0.75+energy*0.15})`;
+  ctx.fillText('by Umrbektp', cx, cy+26);
+  ctx.shadowBlur=0;
+  ctx.restore();
+
+  requestAnimationFrame(drawFrame);
+}
+
+window.addEventListener('resize', initCanvas);
+initCanvas();
+drawFrame();
+</script>
+</body>
+</html>
