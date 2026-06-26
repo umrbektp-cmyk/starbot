@@ -518,7 +518,7 @@ if (TG_NAME) {
 
   const greeting = document.createElement('div');
   greeting.style.cssText = 'text-align:center;padding:4px 0 2px';
-  greeting.innerHTML = `<span style="font-size:15px;font-weight:600;color:#c4b5fd">Hey, ${TG_USER.first_name}!</span><br><span style="font-size:12px;color:rgba(255,255,255,0.4)">Pick your level to start</span>`;
+  greeting.innerHTML = `<span style="font-size:15px;font-weight:600;color:#7c3aed">Hey, ${TG_USER.first_name}!</span><br><span style="font-size:12px;color:rgba(80,60,150,0.6)">Pick your level to start</span>`;
   ns.parentNode.insertBefore(greeting, ns);
 }
 
@@ -594,14 +594,17 @@ function selectLevel(level) {
 }
 
 function checkReady() {
-  const name = TG_NAME || document.getElementById('nameInput').value.trim();
+  const name = TG_NAME || document.getElementById('nameInput')?.value.trim() || '';
   const btn = document.getElementById('startBtn');
   if (name.length >= 1 && selectedLevel) {
     btn.classList.add('ready');
+    btn.style.pointerEvents = 'all';
   } else {
     btn.classList.remove('ready');
   }
 }
+// Run on load in case TG_NAME is already available
+checkReady();
 
 async function startSession() {
   const name = TG_NAME || document.getElementById('nameInput').value.trim();
