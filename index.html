@@ -483,7 +483,7 @@ if (TG_NAME) {
   fetch(BASE_URL + '/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: TG_NAME, level: 'intermediate' })
+    body: JSON.stringify({ name: TG_NAME, level: 'intermediate' }) 
   }).then(r => r.json()).then(data => {
     if (data.id) {
       const storageKey = `safiya_student_${TG_ID}`;
