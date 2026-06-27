@@ -476,14 +476,15 @@ if (tg) {
 const TG_USER = tg?.initDataUnsafe?.user || null;
 const TG_NAME = TG_USER ? (TG_USER.first_name + (TG_USER.last_name ? ' ' + TG_USER.last_name : '')) : null;
 const TG_ID   = TG_USER ? String(TG_USER.id) : null;
-let selectedLevel = 'intermediate';
+let selectedLevel = 'intermediate'; // default level — must be before if(TG_NAME)
+
 // If coming from Telegram with name: auto-register and skip welcome screen
 if (TG_NAME) {
   // Auto-register with Telegram name
   fetch(BASE_URL + '/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: TG_NAME, level: 'intermediate' }) 
+    body: JSON.stringify({ name: TG_NAME, level: selectedLevel })
   }).then(r => r.json()).then(data => {
     if (data.id) {
       const storageKey = `safiya_student_${TG_ID}`;
@@ -506,7 +507,6 @@ let lang = 'en';
 let studentId = null;
 let studentName = '';
 let studentLevel = 'intermediate';
-let selectedLevel = 'intermediate'; // default level
 let sessionMessages = 0;
 let sessionStartTime = null;
 let pendingMessages = 0;
