@@ -14,31 +14,21 @@
       color: #1e1b4b;
     }
 
-    #orb-canvas {
-      position: fixed; inset: 0; width: 100%; height: 100%;
-      z-index: 0; pointer-events: none;
-    }
+    #orb-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
     #app {
-      position: fixed; inset: 0; z-index: 1;
-      display: flex; flex-direction: column;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+      position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
     }
 
     .hidden { display: none !important; }
 
     /* ── Welcome ── */
-    #welcome {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 24px 20px;
-    }
+    #welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px; }
     .welcome-card {
-      background: rgba(255,255,255,0.78);
-      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255,255,255,0.92); border-radius: 28px;
-      padding: 36px 28px 28px; width: 100%; max-width: 390px;
-      box-shadow: 0 12px 40px rgba(124,58,237,0.13);
+      background: rgba(255,255,255,0.78); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255,255,255,0.92); border-radius: 28px; padding: 36px 28px 28px;
+      width: 100%; max-width: 390px; box-shadow: 0 12px 40px rgba(124,58,237,0.13);
     }
     .app-logo { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c3aed; margin-bottom: 20px; }
     #greeting { font-size: 26px; font-weight: 700; color: #1e1b4b; line-height: 1.2; margin-bottom: 6px; }
@@ -46,29 +36,25 @@
     #name-input-wrap { margin-bottom: 18px; }
     #name-input {
       width: 100%; padding: 13px 16px; border: 2px solid #e5e7eb; border-radius: 14px;
-      font-size: 16px; font-family: inherit; color: #1e1b4b;
-      background: rgba(255,255,255,0.9); outline: none; transition: border-color 0.2s;
+      font-size: 16px; font-family: inherit; color: #1e1b4b; background: rgba(255,255,255,0.9);
+      outline: none; transition: border-color 0.2s;
     }
     #name-input:focus { border-color: #7c3aed; }
     #name-input::placeholder { color: #9ca3af; }
-
     .level-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 10px; }
     .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
     .lvl-btn {
       padding: 11px 12px; border: 2px solid #e5e7eb; border-radius: 14px;
       background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500;
-      color: #6b7280; cursor: pointer; transition: all 0.18s;
-      text-align: left; line-height: 1.4; touch-action: manipulation;
+      color: #6b7280; cursor: pointer; transition: all 0.18s; text-align: left; line-height: 1.4; touch-action: manipulation;
     }
     .lvl-btn strong { display: block; font-size: 14px; color: #374151; }
     .lvl-btn.active { border-color: #7c3aed; background: rgba(124,58,237,0.07); color: #7c3aed; }
     .lvl-btn.active strong { color: #7c3aed; }
     #start-btn {
-      width: 100%; padding: 16px;
-      background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-      color: white; border: none; border-radius: 18px; font-size: 16px;
-      font-weight: 700; cursor: pointer; touch-action: manipulation;
-      transition: opacity 0.2s, transform 0.1s;
+      width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+      color: white; border: none; border-radius: 18px; font-size: 16px; font-weight: 700;
+      cursor: pointer; touch-action: manipulation; transition: opacity 0.2s, transform 0.1s;
       box-shadow: 0 4px 20px rgba(124,58,237,0.35);
     }
     #start-btn:active { opacity: 0.85; transform: scale(0.98); }
@@ -78,10 +64,8 @@
     #main { flex: 1; display: flex; flex-direction: column; }
 
     #header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 18px;
-      background: rgba(255,255,255,0.55);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;
+      background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255,255,255,0.6); flex-shrink: 0;
     }
     .header-left { display: flex; flex-direction: column; }
@@ -89,22 +73,19 @@
     .header-sub { font-size: 12px; color: #7c3aed; font-weight: 500; text-transform: capitalize; }
     .header-actions { display: flex; gap: 8px; align-items: center; }
     .icon-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; border: 1.5px solid rgba(124,58,237,0.25);
-      border-radius: 10px; background: rgba(255,255,255,0.7);
-      color: #7c3aed; font-size: 14px; font-weight: 700;
-      cursor: pointer; touch-action: manipulation; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      border: 1.5px solid rgba(124,58,237,0.25); border-radius: 10px;
+      background: rgba(255,255,255,0.7); color: #7c3aed; font-size: 14px; font-weight: 700;
+      cursor: pointer; touch-action: manipulation;
     }
     #lang-btn { font-size: 12px; letter-spacing: 0.04em; width: 42px; }
 
     /* ── Transcript ── */
     #transcript {
       flex: 1; overflow-y: auto; padding: 16px 16px 8px;
-      display: flex; flex-direction: column; gap: 12px;
-      -webkit-overflow-scrolling: touch;
+      display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch;
     }
     #transcript::-webkit-scrollbar { display: none; }
-
     .msg { display: flex; flex-direction: column; max-width: 82%; }
     .msg.user      { align-self: flex-end;   align-items: flex-end;   }
     .msg.assistant { align-self: flex-start; align-items: flex-start; }
@@ -116,80 +97,66 @@
       color: white; border-bottom-right-radius: 5px;
     }
     .msg.assistant .msg-bubble {
-      background: rgba(255,255,255,0.82); backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.9);
-      color: #1e1b4b; border-bottom-left-radius: 5px;
+      background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.9); color: #1e1b4b; border-bottom-left-radius: 5px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
     .msg.system .msg-bubble {
-      background: rgba(239,235,255,0.7); color: #7c3aed;
-      font-size: 13px; border-radius: 12px; text-align: center;
+      background: rgba(239,235,255,0.7); color: #7c3aed; font-size: 13px; border-radius: 12px; text-align: center;
     }
     .interim-bubble {
-      align-self: flex-end; padding: 10px 14px;
-      background: rgba(124,58,237,0.09);
-      border: 1.5px dashed #c4b5fd; border-radius: 18px;
-      border-bottom-right-radius: 5px; font-size: 14px;
-      color: #7c3aed; max-width: 82%; font-style: italic;
+      align-self: flex-end; padding: 10px 14px; background: rgba(124,58,237,0.09);
+      border: 1.5px dashed #c4b5fd; border-radius: 18px; border-bottom-right-radius: 5px;
+      font-size: 14px; color: #7c3aed; max-width: 82%; font-style: italic;
     }
 
     /* ── Controls ── */
     #controls {
-      flex-shrink: 0; display: flex; flex-direction: column;
-      align-items: center; padding: 16px 20px 24px;
-      background: rgba(255,255,255,0.5);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.6); gap: 12px;
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+      padding: 14px 20px 22px;
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.6); gap: 10px;
     }
-
     #status-text {
-      font-size: 13px; font-weight: 500; color: #9ca3af;
-      text-align: center; min-height: 18px; transition: color 0.3s;
+      font-size: 13px; font-weight: 500; color: #9ca3af; text-align: center; min-height: 18px;
     }
     #status-text.listening { color: #7c3aed; }
     #status-text.thinking  { color: #2563eb; }
     #status-text.speaking  { color: #059669; }
 
-    /* Push-to-talk button */
-    #ptt-btn {
-      width: 76px; height: 76px; border-radius: 50%;
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; touch-action: none; user-select: none;
-      box-shadow: 0 4px 24px rgba(124,58,237,0.4);
-      transition: transform 0.15s, box-shadow 0.15s;
-      position: relative;
-    }
-    #ptt-btn.active {
-      transform: scale(1.12);
-      box-shadow: 0 4px 40px rgba(124,58,237,0.75);
-    }
-    #ptt-btn.speaking-interrupt {
-      background: linear-gradient(135deg, #059669, #0284c7);
-      box-shadow: 0 4px 24px rgba(5,150,105,0.5);
-    }
-    #ptt-hint {
-      font-size: 12px; color: #9ca3af; font-weight: 500; letter-spacing: 0.02em;
-    }
+    /* ── Mic slide toggle ── */
+    .mic-row { display: flex; align-items: center; gap: 14px; }
+    .mic-label { font-size: 13px; font-weight: 500; color: #9ca3af; }
 
-    @keyframes ptt-pulse {
-      0%, 100% { box-shadow: 0 4px 40px rgba(124,58,237,0.75), 0 0 0 0 rgba(124,58,237,0.5); }
-      50%       { box-shadow: 0 4px 40px rgba(124,58,237,0.75), 0 0 0 14px rgba(124,58,237,0); }
+    .mic-switch { position: relative; width: 88px; height: 46px; cursor: pointer; display: block; }
+    .mic-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 3; }
+    .mic-track {
+      position: absolute; inset: 0; border-radius: 23px; background: #e5e7eb; transition: background 0.3s;
     }
-    #ptt-btn.active { animation: ptt-pulse 1s infinite; }
+    .mic-switch input:checked ~ .mic-track { background: linear-gradient(135deg, #7c3aed, #2563eb); }
+    .mic-thumb {
+      position: absolute; top: 5px; left: 5px; width: 36px; height: 36px; border-radius: 50%;
+      background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none; display: flex; align-items: center; justify-content: center; color: #9ca3af;
+    }
+    .mic-switch input:checked ~ .mic-thumb { transform: translateX(42px); color: #7c3aed; }
+
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 0 rgba(124,58,237,0.4); }
+      50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 10px rgba(124,58,237,0); }
+    }
+    .mic-switch input:checked ~ .mic-thumb { animation: mic-pulse 1.8s infinite; }
 
     /* ── Leaderboard ── */
     #lb-modal {
-      position: fixed; inset: 0; z-index: 10;
-      display: flex; align-items: flex-end;
-      background: rgba(30,27,75,0.4);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end;
+      background: rgba(30,27,75,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
     .lb-sheet {
       background: rgba(255,255,255,0.96); border-radius: 28px 28px 0 0;
       padding-bottom: env(safe-area-inset-bottom); width: 100%; max-height: 70vh;
-      display: flex; flex-direction: column;
-      box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+      display: flex; flex-direction: column; box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
     }
     .lb-handle { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 12px auto 0; }
     .lb-header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
@@ -262,13 +229,20 @@
     <div id="transcript"></div>
 
     <div id="controls">
-      <p id="status-text">Hold the button to speak</p>
-      <div id="ptt-btn">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.07A8.001 8.001 0 0 0 20 11a1 1 0 1 0-2 0 6 6 0 0 1-12 0 1 1 0 1 0-2 0 8.001 8.001 0 0 0 7 7.93z"/>
-        </svg>
+      <p id="status-text">Slide to start talking</p>
+      <div class="mic-row">
+        <span class="mic-label">Off</span>
+        <label class="mic-switch">
+          <input type="checkbox" id="mic-check">
+          <div class="mic-track"></div>
+          <div class="mic-thumb">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.07A8.001 8.001 0 0 0 20 11a1 1 0 1 0-2 0 6 6 0 0 1-12 0 1 1 0 1 0-2 0 8.001 8.001 0 0 0 7 7.93z"/>
+            </svg>
+          </div>
+        </label>
+        <span class="mic-label">Talk</span>
       </div>
-      <p id="ptt-hint">Hold to talk · Tap to interrupt</p>
     </div>
   </div>
 </div>
@@ -299,9 +273,8 @@ class Orb {
     this.nodes  = [];
     this.rings  = [];
     this.state  = 'IDLE';
-    this.burst  = 0;     // 0 = contained, 1 = fully exploded
+    this.burst  = 0;
     this.frame  = 0;
-
     window.addEventListener('resize', () => this._resize());
     this._resize();
     this._mkNodes();
@@ -315,7 +288,7 @@ class Orb {
     this.cy = this.canvas.height * 0.36;
     const m = Math.min(this.canvas.width, this.canvas.height);
     this.baseR  = m * 0.20;
-    this.burstR = m * 0.72;   // nodes spread to 72% of screen — well outside the circle
+    this.burstR = m * 0.72;
     this.connD  = this.baseR * 0.70;
   }
 
@@ -324,48 +297,32 @@ class Orb {
     for (let i = 0; i < N; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = Math.random() * this.baseR;
-      this.nodes.push({
-        x: Math.cos(a) * r, y: Math.sin(a) * r,
-        vx: 0, vy: 0,
-        angle: a, baseR: r,
-        size: 1 + Math.random() * 1.8,
-      });
+      this.nodes.push({ x: Math.cos(a)*r, y: Math.sin(a)*r, vx:0, vy:0, angle:a, baseR:r, size:1+Math.random()*1.8 });
     }
   }
 
   setState(s) { this.state = s; }
-
-  _ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+  _ease(t)    { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
   _tick() {
     this.frame++;
+    if (this.state === 'SPEAKING') this.burst = Math.min(1, this.burst + 0.07);
+    else                           this.burst = Math.max(0, this.burst - 0.012);
 
-    // Burst: explode fast, contract slowly
-    if (this.state === 'SPEAKING') {
-      this.burst = Math.min(1, this.burst + 0.07);   // ~0.8s to full burst
-    } else {
-      this.burst = Math.max(0, this.burst - 0.012);  // ~4s to contract
-    }
-
-    // Spawn pulse rings while speaking
     if (this.state === 'SPEAKING' && this.frame % 18 === 0)
       this.rings.push({ r: this.baseR * 0.5, a: 0.6 });
     this.rings.forEach(r => { r.r += 5; r.a -= 0.011; });
     this.rings = this.rings.filter(r => r.a > 0);
 
-    const envelope = this.baseR + (this.burstR - this.baseR) * this._ease(this.burst);
-
-    const jitter = this.state === 'LISTENING' ? 0.28
-                 : this.state === 'SPEAKING'  ? 0.45 : 0.04;
+    const env    = this.baseR + (this.burstR - this.baseR) * this._ease(this.burst);
+    const jitter = this.state === 'LISTENING' ? 0.28 : this.state === 'SPEAKING' ? 0.45 : 0.04;
 
     this.nodes.forEach(n => {
-      n.vx += (Math.random() - 0.5) * jitter;
-      n.vy += (Math.random() - 0.5) * jitter;
-
-      const tr = n.baseR / this.baseR * envelope;
-      n.vx += (Math.cos(n.angle) * tr - n.x) * 0.05;
-      n.vy += (Math.sin(n.angle) * tr - n.y) * 0.05;
-
+      n.vx += (Math.random()-.5) * jitter;
+      n.vy += (Math.random()-.5) * jitter;
+      const tr = n.baseR / this.baseR * env;
+      n.vx += (Math.cos(n.angle)*tr - n.x) * 0.05;
+      n.vy += (Math.sin(n.angle)*tr - n.y) * 0.05;
       n.vx *= 0.86; n.vy *= 0.86;
       n.x  += n.vx; n.y  += n.vy;
     });
@@ -376,109 +333,76 @@ class Orb {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     const glowR = baseR + (burstR - baseR) * burst * 0.8;
-
-    // Ambient glow
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 1.3);
-    g.addColorStop(0,   `rgba(124,58,237,${0.08 + burst * 0.1})`);
-    g.addColorStop(0.5, `rgba(99,102,241,${0.05 + burst * 0.06})`);
+    g.addColorStop(0,   `rgba(124,58,237,${0.08 + burst*0.10})`);
+    g.addColorStop(0.5, `rgba(99,102,241,${0.05 + burst*0.06})`);
     g.addColorStop(1,   'rgba(37,99,235,0)');
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(cx, cy, glowR * 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, glowR*1.5, 0, Math.PI*2); ctx.fill();
 
-    // Circle boundary (fades as burst grows)
     if (burst < 0.7) {
-      ctx.save();
-      ctx.setLineDash([5, 10]);
-      ctx.strokeStyle = `rgba(167,139,250,${(0.7 - burst) * 0.45})`;
+      ctx.save(); ctx.setLineDash([5,10]);
+      ctx.strokeStyle = `rgba(167,139,250,${(0.7-burst)*0.45})`;
       ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI*2); ctx.stroke();
       ctx.restore();
     }
 
-    // Pulse rings (neurolink shockwave)
     this.rings.forEach(r => {
-      ctx.beginPath(); ctx.arc(cx, cy, r.r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(124,58,237,${r.a})`;
-      ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(124,58,237,${r.a})`; ctx.lineWidth = 1.5; ctx.stroke();
     });
 
-    // Node connections — dynamically widen during burst so web spreads visibly
     const dynConn = connD * (1 + burst * 1.4);
-    const lineAlphaBoost = burst * 0.3;
     for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i + 1; j < this.nodes.length; j++) {
+      for (let j = i+1; j < this.nodes.length; j++) {
         const a = this.nodes[i], b = this.nodes[j];
-        const dx = a.x - b.x, dy = a.y - b.y;
-        const d = Math.sqrt(dx*dx + dy*dy);
+        const dx = a.x-b.x, dy = a.y-b.y, d = Math.sqrt(dx*dx+dy*dy);
         if (d < dynConn) {
-          const alpha = (1 - d / dynConn) * (0.25 + lineAlphaBoost);
-          // Shift line colour toward electric blue during burst
-          const r = Math.round(124 - burst * 50);
-          const gv = Math.round(58  + burst * 80);
-          const bv = Math.round(237);
-          ctx.strokeStyle = `rgba(${r},${gv},${bv},${alpha})`;
-          ctx.lineWidth = 0.6 + burst * 0.4;
-          ctx.beginPath();
-          ctx.moveTo(cx + a.x, cy + a.y);
-          ctx.lineTo(cx + b.x, cy + b.y);
-          ctx.stroke();
+          const alpha = (1-d/dynConn) * (0.25 + burst*0.3);
+          const rv = Math.round(124-burst*50), gv = Math.round(58+burst*80);
+          ctx.strokeStyle = `rgba(${rv},${gv},237,${alpha})`;
+          ctx.lineWidth = 0.6 + burst*0.4;
+          ctx.beginPath(); ctx.moveTo(cx+a.x, cy+a.y); ctx.lineTo(cx+b.x, cy+b.y); ctx.stroke();
         }
       }
     }
 
-    // Nodes
     this.nodes.forEach(n => {
-      const nx = cx + n.x, ny = cy + n.y;
-      const s  = n.size * (1 + burst * 0.8);
-
-      const ng = ctx.createRadialGradient(nx, ny, 0, nx, ny, s * 5);
-      ng.addColorStop(0, `rgba(124,58,237,${0.6 + burst * 0.35})`);
+      const nx = cx+n.x, ny = cy+n.y, s = n.size*(1+burst*0.8);
+      const ng = ctx.createRadialGradient(nx,ny,0,nx,ny,s*5);
+      ng.addColorStop(0, `rgba(124,58,237,${0.6+burst*0.35})`);
       ng.addColorStop(1, 'rgba(124,58,237,0)');
-      ctx.fillStyle = ng;
-      ctx.beginPath(); ctx.arc(nx, ny, s * 5, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = `rgba(${Math.round(90 - burst*30)},${Math.round(35 + burst*40)},220,0.9)`;
-      ctx.beginPath(); ctx.arc(nx, ny, s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(nx,ny,s*5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(${Math.round(90-burst*30)},${Math.round(35+burst*40)},220,0.9)`;
+      ctx.beginPath(); ctx.arc(nx,ny,s,0,Math.PI*2); ctx.fill();
     });
 
-    // Listening ripple ring
     if (this.state === 'LISTENING') {
-      const rr = baseR * 0.96 + Math.sin(frame * 0.14) * baseR * 0.06;
-      ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(124,58,237,${0.20 + Math.sin(frame * 0.14) * 0.09})`;
+      const rr = baseR*0.96 + Math.sin(frame*0.14)*baseR*0.06;
+      ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(124,58,237,${0.20+Math.sin(frame*0.14)*0.09})`;
       ctx.lineWidth = 2.5; ctx.stroke();
     }
 
-    // Centre text — "Safiya AI" + "by Umrbektp"
-    // Fades out as nodes burst (so text doesn't clash with spread web)
+    // Centre text — fades out as web bursts outward
     const textAlpha = Math.max(0, 1 - burst * 2.2);
     if (textAlpha > 0) {
       ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Soft shadow so text stays readable over nodes
-      ctx.shadowColor = 'rgba(255,255,255,0.9)';
-      ctx.shadowBlur  = 12;
-
-      ctx.font = `bold ${Math.round(baseR * 0.48)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-      ctx.fillStyle = `rgba(30,27,75,${textAlpha * 0.85})`;
-      ctx.fillText('Safiya AI', cx, cy - baseR * 0.09);
-
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 12;
+      ctx.font = `bold ${Math.round(baseR*0.48)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillStyle = `rgba(30,27,75,${textAlpha*0.85})`;
+      ctx.fillText('Safiya AI', cx, cy - baseR*0.09);
       ctx.shadowBlur = 8;
-      ctx.font = `${Math.round(baseR * 0.21)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-      ctx.fillStyle = `rgba(124,58,237,${textAlpha * 0.75})`;
-      ctx.fillText('by Umrbektp', cx, cy + baseR * 0.28);
-
+      ctx.font = `${Math.round(baseR*0.21)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillStyle = `rgba(124,58,237,${textAlpha*0.75})`;
+      ctx.fillText('by Umrbektp', cx, cy + baseR*0.28);
       ctx.restore();
     }
   }
 
-  _loop() {
-    this._tick();
-    this._draw();
-    requestAnimationFrame(() => this._loop());
-  }
+  _loop() { this._tick(); this._draw(); requestAnimationFrame(() => this._loop()); }
 }
 
 // ══════════════════════════════════════════════
@@ -491,15 +415,13 @@ let orb;
 let student = null, language = 'EN', selectedLevel = 'pre-intermediate';
 let history = [], sessionMsgs = 0, sessionStart = null;
 
-// Speech / audio state
-let recognition   = null;
-let isListening   = false;
-let isSpeaking    = false;
-let isProcessing  = false;          // true while waiting for Claude/TTS
-let currentAudio  = null;           // reference to playing Audio object
-let ttsFetchCtrl  = null;           // AbortController for TTS fetch
-let pttTranscript = '';
-let pttActive     = false;          // pointer currently held down
+// State flags — carefully managed so the listening loop never breaks
+let recognition  = null;
+let isListening  = false;   // toggle is ON
+let isProcessing = false;   // waiting for Claude response
+let isSpeaking   = false;   // TTS audio is playing
+let currentAudio = null;
+let ttsFetchCtrl = null;
 
 // Telegram
 const tg     = window.Telegram?.WebApp;
@@ -509,19 +431,18 @@ const tgName = tgUser?.first_name
   : null;
 if (tg) { try { tg.ready(); tg.expand(); } catch(_) {} }
 
-// DOM
+// DOM refs
 const $ = id => document.getElementById(id);
-const elWelcome    = $('welcome'),   elMain      = $('main');
-const elGreeting   = $('greeting'),  elNameWrap  = $('name-input-wrap');
-const elNameInput  = $('name-input'),elStartBtn  = $('start-btn');
-const elTranscript = $('transcript'),elStatus    = $('status-text');
-const elHeaderName = $('header-name'),elHeaderLvl= $('header-level');
-const elLangBtn    = $('lang-btn'),  elLbBtn     = $('lb-btn');
-const elLbModal    = $('lb-modal'),  elLbClose   = $('lb-close');
-const elLbList     = $('lb-list'),   elPttBtn    = $('ptt-btn');
-const elPttHint    = $('ptt-hint');
+const elWelcome    = $('welcome'),    elMain       = $('main');
+const elGreeting   = $('greeting'),   elNameWrap   = $('name-input-wrap');
+const elNameInput  = $('name-input'), elStartBtn   = $('start-btn');
+const elTranscript = $('transcript'), elStatus     = $('status-text');
+const elMicCheck   = $('mic-check'),  elHeaderName = $('header-name');
+const elHeaderLvl  = $('header-level'),elLangBtn   = $('lang-btn');
+const elLbBtn      = $('lb-btn'),     elLbModal    = $('lb-modal');
+const elLbClose    = $('lb-close'),   elLbList     = $('lb-list');
 
-// ── Init ─────────────────────────────────────
+// ── Init ──────────────────────────────────────
 
 function init() {
   orb = new Orb($('orb-canvas'));
@@ -545,11 +466,14 @@ function init() {
 
   elStartBtn.addEventListener('click', handleStart);
 
-  // Push-to-talk: pointer events so it works on both touch and mouse
-  elPttBtn.addEventListener('pointerdown', onPttDown);
-  elPttBtn.addEventListener('pointerup',   onPttUp);
-  elPttBtn.addEventListener('pointerleave', e => { if (pttActive) onPttUp(e); });
-  elPttBtn.addEventListener('contextmenu', e => e.preventDefault());
+  // Toggle: ON = start listening, OFF = stop everything
+  elMicCheck.addEventListener('change', () => {
+    if (elMicCheck.checked) {
+      startListening();
+    } else {
+      stopAll();
+    }
+  });
 
   elLangBtn.addEventListener('click', () => {
     language = language === 'EN' ? 'UZ' : 'EN';
@@ -559,7 +483,6 @@ function init() {
   elLbBtn.addEventListener('click', showLeaderboard);
   elLbClose.addEventListener('click', () => elLbModal.classList.add('hidden'));
   elLbModal.addEventListener('click', e => { if (e.target === elLbModal) elLbModal.classList.add('hidden'); });
-
   window.addEventListener('beforeunload', logSession);
   document.addEventListener('visibilitychange', () => { if (document.hidden) logSession(); });
 }
@@ -569,150 +492,120 @@ function init() {
 async function handleStart() {
   const name = tgName || elNameInput.value.trim() || 'Student';
   selectedLevel = document.querySelector('.lvl-btn.active')?.dataset.level || 'pre-intermediate';
-  elStartBtn.disabled = true;
-  elStartBtn.textContent = 'Starting…';
-
-  try { student = await apiPost('/register', { name, level: selectedLevel }); }
-  catch(_) { student = null; }
-
+  elStartBtn.disabled = true; elStartBtn.textContent = 'Starting…';
+  try { student = await apiPost('/register', { name, level: selectedLevel }); } catch(_) { student = null; }
   sessionStart = Date.now();
-  elWelcome.classList.add('hidden');
-  elMain.classList.remove('hidden');
+  elWelcome.classList.add('hidden'); elMain.classList.remove('hidden');
   elHeaderName.textContent = name.split(' ')[0];
   elHeaderLvl.textContent  = selectedLevel;
   addMsg('assistant', `Hey! Let's do this. What do you want to talk about today?`);
 }
 
-// ── Push-to-talk ──────────────────────────────
+// ── Mic / listening ───────────────────────────
 
-function onPttDown(e) {
-  e.preventDefault();
-  elPttBtn.setPointerCapture(e.pointerId);
-  pttActive = true;
-
-  if (isSpeaking || isProcessing) {
-    // Interrupt Safiya — stop audio immediately, then start listening
-    interruptSafiya();
-    return;
-  }
-
-  startPTT();
-}
-
-function onPttUp(e) {
-  if (!pttActive) return;
-  pttActive = false;
-  elPttBtn.classList.remove('active');
-
-  if (isListening) {
-    stopPTTAndSend();
-  }
-}
-
-function startPTT() {
+function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     alert('Speech recognition not supported. Use Chrome on Android or desktop.');
+    elMicCheck.checked = false;
     return;
   }
-
-  pttTranscript = '';
-  isListening   = true;
-  elPttBtn.classList.add('active');
-  elPttBtn.classList.remove('speaking-interrupt');
+  isListening = true;
+  // If Safiya is mid-sentence, stop her and listen
+  if (isSpeaking || isProcessing) {
+    interruptSafiya();
+    return;
+  }
   setStatus('Listening…', 'listening');
   orb.setState('LISTENING');
+  _startRec();
+}
 
+function stopAll() {
+  isListening  = false;
+  isProcessing = false;
+  try { recognition?.stop(); } catch(_) {}
+  recognition = null;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
+  isSpeaking = false;
+  orb.setState('IDLE');
+  setStatus('Slide to start talking', '');
+  document.getElementById('interim-live')?.remove();
+}
+
+function interruptSafiya() {
+  // Stop audio / fetch
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
+  isSpeaking   = false;
+  isProcessing = false;
+  orb.setState('IDLE');
+  // Small delay then start recognition
+  setTimeout(() => {
+    if (isListening) { setStatus('Listening…', 'listening'); orb.setState('LISTENING'); _startRec(); }
+  }, 100);
+}
+
+function _startRec() {
+  if (!isListening) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.continuous     = true;
+  recognition.continuous     = false;
   recognition.interimResults = true;
   recognition.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
 
+  let interimEl = null;
+
   recognition.onresult = evt => {
-    let interim = '', finalChunk = '';
+    let interim = '', final = '';
     for (let i = evt.resultIndex; i < evt.results.length; i++) {
       const t = evt.results[i][0].transcript;
-      if (evt.results[i].isFinal) finalChunk += t;
-      else interim += t;
+      if (evt.results[i].isFinal) final += t; else interim += t;
     }
-    if (finalChunk) pttTranscript += finalChunk;
-
-    // Show live interim text
-    let el = document.getElementById('interim-live');
-    const display = interim || pttTranscript;
-    if (display) {
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'interim-live';
-        el.className = 'interim-bubble';
-        elTranscript.appendChild(el);
+    if (interim) {
+      if (!interimEl) {
+        interimEl = document.createElement('div');
+        interimEl.id = 'interim-live'; interimEl.className = 'interim-bubble';
+        elTranscript.appendChild(interimEl);
       }
-      el.textContent = display;
+      interimEl.textContent = interim;
       elTranscript.scrollTop = elTranscript.scrollHeight;
+    }
+    if (final.trim()) {
+      if (interimEl) { interimEl.remove(); interimEl = null; }
+      handleSpeech(final.trim());
     }
   };
 
   recognition.onend = () => {
-    // If still holding button and nothing interrupted us, restart recognition
-    if (isListening && pttActive) {
-      try { recognition.start(); } catch(_) {}
+    if (interimEl) { interimEl.remove(); interimEl = null; }
+    // Only auto-restart when toggle is ON and we're not busy
+    if (isListening && !isProcessing && !isSpeaking) {
+      setTimeout(() => { if (isListening && !isProcessing && !isSpeaking) _startRec(); }, 150);
     }
   };
 
   recognition.onerror = evt => {
-    if (evt.error !== 'aborted' && isListening && pttActive) {
-      try { recognition.start(); } catch(_) {}
+    if (interimEl) { interimEl.remove(); interimEl = null; }
+    if ((evt.error === 'no-speech' || evt.error === 'aborted') && isListening && !isProcessing && !isSpeaking) {
+      setTimeout(() => _startRec(), 200);
     }
   };
 
   try { recognition.start(); } catch(_) {}
 }
 
-function stopPTTAndSend() {
-  isListening = false;
-  try { recognition?.stop(); } catch(_) {}
-  recognition = null;
-
-  // Remove interim bubble
-  document.getElementById('interim-live')?.remove();
-
-  const text = pttTranscript.trim();
-  pttTranscript = '';
-
-  if (text) {
-    handleSpeech(text);
-  } else {
-    orb.setState('IDLE');
-    setStatus('Hold the button to speak', '');
-  }
-}
-
-function interruptSafiya() {
-  // Stop audio mid-playback
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  // Cancel pending TTS fetch
-  ttsFetchCtrl?.abort();
-  ttsFetchCtrl = null;
-
-  isSpeaking   = false;
-  isProcessing = false;
-
-  elPttBtn.classList.remove('speaking-interrupt');
-  orb.setState('IDLE');
-
-  // Small delay then start listening
-  setTimeout(() => {
-    if (pttActive) startPTT();
-  }, 80);
-}
-
 // ── Conversation ──────────────────────────────
 
 async function handleSpeech(text) {
-  if (!text) return;
+  if (!text || isProcessing || isSpeaking) return;
+
+  // ← KEY FIX: set isProcessing BEFORE stopping recognition
+  //   so recognition.onend won't try to restart
+  isProcessing = true;
+  try { recognition?.stop(); } catch(_) {}
+  recognition = null;
 
   addMsg('user', text);
   history.push({ role: 'user', content: text });
@@ -720,34 +613,29 @@ async function handleSpeech(text) {
 
   setStatus('Safiya is thinking…', 'thinking');
   orb.setState('IDLE');
-  isProcessing = true;
-  elPttBtn.classList.add('speaking-interrupt');
 
   const typingEl = addTyping();
 
   try {
     const data = await apiPost('/chat', {
-      message: text,
-      language,
+      message: text, language,
       level: student?.level || selectedLevel,
       history: history.slice(-8),
     });
-
     typingEl.remove();
     const reply = data.reply;
     history.push({ role: 'assistant', content: reply });
     addMsg('assistant', reply);
     sessionMsgs++;
-
     isProcessing = false;
     await speak(reply);
   } catch(err) {
     typingEl.remove();
     isProcessing = false;
-    elPttBtn.classList.remove('speaking-interrupt');
     addMsg('system', 'Something went wrong. Try again!');
-    setStatus('Hold the button to speak', '');
-    orb.setState('IDLE');
+    setStatus(isListening ? 'Listening…' : 'Slide to start talking', isListening ? 'listening' : '');
+    if (isListening) { orb.setState('LISTENING'); _startRec(); }
+    else orb.setState('IDLE');
   }
 }
 
@@ -755,42 +643,38 @@ async function handleSpeech(text) {
 
 async function speak(text) {
   if (!text) return;
-  isSpeaking = true;
-  setStatus('Safiya is speaking… (tap to interrupt)', 'speaking');
-  orb.setState('SPEAKING');
-
+  isSpeaking   = true;
   ttsFetchCtrl = new AbortController();
+  setStatus('Safiya is speaking…', 'speaking');
+  orb.setState('SPEAKING');
 
   try {
     const res = await fetch(`${BACKEND}/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-      signal: ttsFetchCtrl.signal,
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }), signal: ttsFetchCtrl.signal,
     });
-
     if (!res.ok) throw new Error(`TTS ${res.status}`);
-
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     currentAudio = new Audio(url);
-
     await new Promise((resolve, reject) => {
-      currentAudio.onended = resolve;
-      currentAudio.onerror = reject;
+      currentAudio.onended = resolve; currentAudio.onerror = reject;
       currentAudio.play().catch(reject);
     });
-
     URL.revokeObjectURL(url);
   } catch(err) {
     if (err.name !== 'AbortError') console.error('TTS:', err);
   } finally {
-    currentAudio = null;
-    ttsFetchCtrl = null;
-    isSpeaking   = false;
-    elPttBtn.classList.remove('speaking-interrupt');
-    orb.setState('IDLE');
-    setStatus('Hold the button to speak', '');
+    currentAudio = null; ttsFetchCtrl = null; isSpeaking = false;
+    // After speaking, auto-resume listening if toggle is still ON
+    if (isListening) {
+      setStatus('Listening…', 'listening');
+      orb.setState('LISTENING');
+      setTimeout(() => { if (isListening && !isProcessing) _startRec(); }, 300);
+    } else {
+      orb.setState('IDLE');
+      setStatus('Slide to start talking', '');
+    }
   }
 }
 
@@ -805,80 +689,49 @@ async function showLeaderboard() {
     const MEDALS = ['🥇','🥈','🥉'];
     elLbList.innerHTML = '';
     data.forEach((s, i) => {
-      const row = document.createElement('div');
-      row.className = 'lb-row';
-      row.innerHTML = `
-        <span class="lb-rank ${i<3?'top':''}">${MEDALS[i]||i+1}</span>
+      const row = document.createElement('div'); row.className = 'lb-row';
+      row.innerHTML = `<span class="lb-rank ${i<3?'top':''}">${MEDALS[i]||i+1}</span>
         <div class="lb-info"><p class="lb-name">${esc(s.name)}</p><p class="lb-level">${esc(s.level)}</p></div>
         <div class="lb-stats"><p class="lb-msgs">${s.messages_sent??0} msgs</p><p class="lb-mins">${Math.round(s.minutes_spent??0)} min</p></div>`;
       elLbList.appendChild(row);
     });
-  } catch(_) {
-    elLbList.innerHTML = '<p class="lb-empty">Could not load leaderboard.</p>';
-  }
+  } catch(_) { elLbList.innerHTML = '<p class="lb-empty">Could not load leaderboard.</p>'; }
 }
 
-// ── UI helpers ────────────────────────────────
+// ── Helpers ───────────────────────────────────
 
 function addMsg(role, text) {
-  const wrap = document.createElement('div');
-  wrap.className = `msg ${role}`;
-  if (role === 'assistant') {
-    const lbl = document.createElement('p');
-    lbl.className = 'msg-label'; lbl.textContent = 'SAFIYA';
-    wrap.appendChild(lbl);
-  }
-  const b = document.createElement('div');
-  b.className = 'msg-bubble'; b.textContent = text;
-  wrap.appendChild(b);
+  const wrap = document.createElement('div'); wrap.className = `msg ${role}`;
+  if (role === 'assistant') { const l = document.createElement('p'); l.className='msg-label'; l.textContent='SAFIYA'; wrap.appendChild(l); }
+  const b = document.createElement('div'); b.className='msg-bubble'; b.textContent=text; wrap.appendChild(b);
   elTranscript.appendChild(wrap);
   requestAnimationFrame(() => elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' }));
   return wrap;
 }
-
 function addTyping() {
-  const wrap = document.createElement('div');
-  wrap.className = 'msg assistant';
-  const lbl = document.createElement('p');
-  lbl.className = 'msg-label'; lbl.textContent = 'SAFIYA';
-  wrap.appendChild(lbl);
-  const b = document.createElement('div');
-  b.className = 'msg-bubble';
-  b.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
-  wrap.appendChild(b);
-  elTranscript.appendChild(wrap);
-  elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' });
+  const wrap = document.createElement('div'); wrap.className='msg assistant';
+  const l = document.createElement('p'); l.className='msg-label'; l.textContent='SAFIYA'; wrap.appendChild(l);
+  const b = document.createElement('div'); b.className='msg-bubble';
+  b.innerHTML='<span class="typing-dots"><span></span><span></span><span></span></span>'; wrap.appendChild(b);
+  elTranscript.appendChild(wrap); elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' });
   return wrap;
 }
-
-function setStatus(text, cls = '') { elStatus.textContent = text; elStatus.className = cls; }
+function setStatus(text, cls='') { elStatus.textContent=text; elStatus.className=cls; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ── API ───────────────────────────────────────
-
 async function apiPost(path, body) {
-  const res = await fetch(`${BACKEND}${path}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const res = await fetch(`${BACKEND}${path}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error||`HTTP ${res.status}`); }
   return res.json();
 }
-
 async function apiFetch(path) {
-  const res = await fetch(`${BACKEND}${path}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const res = await fetch(`${BACKEND}${path}`); if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json();
 }
-
 async function logSession() {
   if (!student?.id || !sessionStart) return;
-  const mins = (Date.now() - sessionStart) / 60000;
-  try { await apiPost('/log', { studentId: student.id, messages: sessionMsgs, minutes: Math.round(mins*10)/10 }); }
-  catch(_) {}
+  const mins = (Date.now()-sessionStart)/60000;
+  try { await apiPost('/log',{studentId:student.id,messages:sessionMsgs,minutes:Math.round(mins*10)/10}); } catch(_){}
 }
 
-// Boot
 init();
 </script>
 </body>
