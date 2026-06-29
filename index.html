@@ -510,6 +510,7 @@ if (tg) {
 const TG_USER = tg?.initDataUnsafe?.user || null;
 const TG_NAME = TG_USER ? (TG_USER.first_name + (TG_USER.last_name ? ' ' + TG_USER.last_name : '')) : null;
 const TG_ID   = TG_USER ? String(TG_USER.id) : null;
+let selectedLevel = 'intermediate';
 
 // If coming from Telegram: hide name input, show greeting instead
 if (TG_NAME) {
