@@ -94,11 +94,11 @@
   }
   .level-btn:hover { background: rgba(255,255,255,0.95); color: #1a1a2e; }
   .level-btn.selected { border-color: rgba(124,58,237,0.7); color: #fff; }
-  .level-btn[data-level="beginner"].selected    { background: rgba(34,197,94,0.15);  border-color: rgba(34,197,94,0.5); }
-  .level-btn[data-level="elementary"].selected  { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.5); }
-  .level-btn[data-level="pre-intermediate"].selected { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); }
-  .level-btn[data-level="intermediate"].selected { background: rgba(249,115,22,0.15); border-color: rgba(249,115,22,0.5); }
-  .level-btn[data-level="advanced"].selected    { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.5); }
+  .level-btn[data-level="beginner"].selected    { background: rgba(34,197,94,0.25);  border-color: rgba(34,197,94,0.8); border-width: 2px; color: #166534; font-weight: 700; }
+  .level-btn[data-level="elementary"].selected  { background: rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.8); border-width: 2px; color: #1e3a8a; font-weight: 700; }
+  .level-btn[data-level="pre-intermediate"].selected { background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.8); border-width: 2px; color: #92400e; font-weight: 700; }
+  .level-btn[data-level="intermediate"].selected { background: rgba(249,115,22,0.25); border-color: rgba(249,115,22,0.8); border-width: 2px; color: #9a3412; font-weight: 700; }
+  .level-btn[data-level="advanced"].selected    { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.8); border-width: 2px; color: #4c1d95; font-weight: 700; }
 
   .level-dot {
     width: 8px; height: 8px; border-radius: 50%; opacity: 0.7;
@@ -119,10 +119,10 @@
     border: none; border-radius: 14px;
     color: #fff; font-size: 15px; font-weight: 600;
     font-family: 'Inter', sans-serif; cursor: pointer;
-    transition: all 0.2s; opacity: 0.4; pointer-events: none;
+    transition: all 0.2s; opacity: 0.5;
     box-shadow: 0 4px 20px rgba(124,58,237,0.35);
   }
-  .start-btn.ready { opacity: 1; pointer-events: all; }
+  .start-btn.ready { opacity: 1; }
   .start-btn.ready:hover { transform: scale(1.02); box-shadow: 0 6px 28px rgba(124,58,237,0.55); }
 
   .welcome-error {
@@ -395,43 +395,9 @@
       <input class="name-input" id="nameInput" type="text" placeholder="Enter your name..." maxlength="40" oninput="checkReady()" />
     </div>
 
-    <div>
-      <div class="welcome-label">Choose your level</div>
-      <div class="level-grid">
-        <button class="level-btn" data-level="beginner" onclick="selectLevel('beginner')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Beginner
-          </span>
-          <span class="level-desc">A1 · Complete beginner</span>
-        </button>
-        <button class="level-btn" data-level="elementary" onclick="selectLevel('elementary')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Elementary
-          </span>
-          <span class="level-desc">A2 · Basic English</span>
-        </button>
-        <button class="level-btn" data-level="pre-intermediate" onclick="selectLevel('pre-intermediate')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Pre-Intermediate
-          </span>
-          <span class="level-desc">B1 · Getting there</span>
-        </button>
-        <button class="level-btn" data-level="intermediate" onclick="selectLevel('intermediate')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Intermediate
-          </span>
-          <span class="level-desc">B2 · Comfortable conversations</span>
-        </button>
-        <button class="level-btn" data-level="advanced" onclick="selectLevel('advanced')">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span class="level-dot"></span>Advanced
-          </span>
-          <span class="level-desc">C1/C2 · Near fluent</span>
-        </button>
-      </div>
-    </div>
+    
 
-    <button class="start-btn" id="startBtn" onclick="startSession()">Start Practice →</button>
+    <button class="start-btn ready" id="startBtn" onclick="startSession()" style="pointer-events:all;opacity:1;">Start Practice →</button>
     <div class="welcome-error" id="welcomeError"></div>
   </div>
 </div>
@@ -510,17 +476,25 @@ if (tg) {
 const TG_USER = tg?.initDataUnsafe?.user || null;
 const TG_NAME = TG_USER ? (TG_USER.first_name + (TG_USER.last_name ? ' ' + TG_USER.last_name : '')) : null;
 const TG_ID   = TG_USER ? String(TG_USER.id) : null;
-let selectedLevel = 'intermediate';
+let selectedLevel = 'intermediate'; // default level — must be before if(TG_NAME)
 
-// If coming from Telegram: hide name input, show greeting instead
+// If coming from Telegram with name: auto-register and skip welcome screen
 if (TG_NAME) {
-  const ns = document.getElementById('nameSection');
-  if (ns) ns.style.display = 'none';
-
-  const greeting = document.createElement('div');
-  greeting.style.cssText = 'text-align:center;padding:4px 0 2px';
-  greeting.innerHTML = `<span style="font-size:15px;font-weight:600;color:#c4b5fd">Hey, ${TG_USER.first_name}!</span><br><span style="font-size:12px;color:rgba(255,255,255,0.4)">Pick your level to start</span>`;
-  ns.parentNode.insertBefore(greeting, ns);
+  // Auto-register with Telegram name
+  fetch(BASE_URL + '/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: TG_NAME, level: selectedLevel })
+  }).then(r => r.json()).then(data => {
+    if (data.id) {
+      const storageKey = `safiya_student_${TG_ID}`;
+      try { localStorage.setItem(storageKey, JSON.stringify({ id: data.id, name: data.name, level: data.level })); } catch(e) {}
+      applySession(data.id, data.name, data.level);
+    }
+  }).catch(() => {
+    // DB down — start as guest using Telegram identity
+    applySession(TG_ID || 'guest', TG_NAME, selectedLevel);
+  });
 }
 
 // ============ STATE ============
@@ -528,7 +502,6 @@ let lang = 'en';
 let studentId = null;
 let studentName = '';
 let studentLevel = 'intermediate';
-let selectedLevel = null;
 let sessionMessages = 0;
 let sessionStartTime = null;
 let pendingMessages = 0;
@@ -538,7 +511,8 @@ let safiyaSpeaking = false;
 let recognition = null;
 let energy = 0;
 let targetEnergy = 0;
-let burstEnergy = 0;
+let burstSpread = 0;    // 0 = nodes inside circle, 1 = nodes fully spread out
+let burstSpreadTarget = 0;
 let currentAudio = null;
 let finalTranscript = '';
 
@@ -594,18 +568,21 @@ function selectLevel(level) {
 }
 
 function checkReady() {
-  const name = TG_NAME || document.getElementById('nameInput').value.trim();
+  const name = TG_NAME || document.getElementById('nameInput')?.value.trim() || '';
   const btn = document.getElementById('startBtn');
-  if (name.length >= 1 && selectedLevel) {
+  if (name.length >= 1) {
     btn.classList.add('ready');
+    btn.style.pointerEvents = 'all';
   } else {
     btn.classList.remove('ready');
   }
 }
+// Run on load
+checkReady();
 
 async function startSession() {
   const name = TG_NAME || document.getElementById('nameInput').value.trim();
-  if (!name || !selectedLevel) return;
+  if (!name) { document.getElementById('welcomeError').textContent = 'Please enter your name.'; return; }
 
   const btn = document.getElementById('startBtn');
   btn.textContent = 'Starting...';
@@ -632,9 +609,11 @@ async function startSession() {
     setTimeout(() => { applySession(data.id, data.name, data.level); }, 500);
 
   } catch(e) {
-    document.getElementById('welcomeError').textContent = 'Error: ' + e.message;
-    btn.textContent = 'Start Practice →';
-    btn.style.opacity = '';
+    // DB down — start as guest so user can still practice
+    const guestId = TG_ID || ('guest_' + Date.now());
+    const ws = document.getElementById('welcomeScreen');
+    ws.classList.add('fade-out');
+    setTimeout(() => { applySession(guestId, name, selectedLevel); }, 500);
   }
 }
 
@@ -778,12 +757,12 @@ function getBestFemaleVoice() {
 function stopSafiya() {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   window.speechSynthesis.cancel();
-  safiyaSpeaking = false; targetEnergy = 0;
+  safiyaSpeaking = false; targetEnergy = 0; burstSpreadTarget = 0;
   document.getElementById('slideToggle').classList.remove('speaking','on','listening');
 }
 
 function speakDone() {
-  safiyaSpeaking = false; targetEnergy = 0;
+  safiyaSpeaking = false; targetEnergy = 0; burstSpreadTarget = 0;
   document.getElementById('slideToggle').classList.remove('speaking','on','listening');
   setStatus(lang === 'en' ? 'Slide to speak' : 'Siljiting va gapiring');
 }
@@ -791,7 +770,7 @@ function speakDone() {
 async function speak(text) {
   window.speechSynthesis.cancel();
   const clean = stripEmojis(text);
-  safiyaSpeaking = true; targetEnergy = 1; burstEnergy = 1.0;
+  safiyaSpeaking = true; targetEnergy = 1; burstSpreadTarget = 1;
   const tog = document.getElementById('slideToggle'); tog.classList.remove('on','listening'); tog.classList.add('speaking');
   setStatus(lang === 'en' ? 'Safiya is speaking...' : 'Safiya gapirmoqda...', true);
 
@@ -939,7 +918,10 @@ function buildNodes() {
       orbitR: Math.random() * 12 + 2,
       r: Math.random() * 2 + 0.8,
       pulse: Math.random() * Math.PI * 2,
-      pulseS: Math.random() * 0.04 + 0.02
+      pulseS: Math.random() * 0.04 + 0.02,
+      // Burst target: each node flies to a unique spot 1.5–3x orb radius out
+      burstTx: cx + Math.cos(angle) * (ORB_R * (1.6 + Math.random() * 1.4)),
+      burstTy: cy + Math.sin(angle) * (ORB_R * (1.6 + Math.random() * 1.4))
     });
   }
   ringNodes = [];
@@ -954,9 +936,10 @@ function ease(v, t, s) { return v + (t - v) * s; }
 function drawFrame() {
   ctx.clearRect(0, 0, W, H);
   energy = ease(energy, targetEnergy, 0.035);
-  burstEnergy *= 0.94; // burst decays
-  const sm = 1 + energy * 3.5 + burstEnergy * 5;
-  const gm = 1 + energy * 1.5 + burstEnergy * 2;
+  // Smoothly animate spread: 0=inside, 1=fully spread out
+  burstSpread += (burstSpreadTarget - burstSpread) * 0.018;
+  const sm = 1 + energy * 3.5;
+  const gm = 1 + energy * 1.5 + burstSpread * 2;
 
   const og = ctx.createRadialGradient(cx, cy, 0, cx, cy, ORB_R * 1.4);
   og.addColorStop(0, `rgba(100,50,220,${0.12*gm})`);
@@ -970,7 +953,7 @@ function drawFrame() {
   ctx.lineWidth = 1.5; ctx.stroke();
 
   ringNodes.forEach((rn, i) => {
-    rn.angle += rn.speed * sm * (i%2===0?1:-1) + (burstEnergy * 0.04 * (i%2===0?1:-1));
+    rn.angle += rn.speed * sm * (i%2===0?1:-1) + (burstSpread * 0.04 * (i%2===0?1:-1));
     rn.pulse += 0.03 * sm;
     const px = cx + Math.cos(rn.angle)*rn.r;
     const py = cy + Math.sin(rn.angle)*rn.r;
@@ -984,67 +967,23 @@ function drawFrame() {
   });
 
   nodes.forEach(n => {
-    n.orbitA += n.orbitS*sm + (burstEnergy * 0.03 * Math.sign(n.orbitS)); n.pulse += n.pulseS*sm;
-    n.x = n.bx + Math.cos(n.orbitA)*n.orbitR;
-    n.y = n.by + Math.sin(n.orbitA)*n.orbitR;
-    const dx=n.x-cx,dy=n.y-cy,d=Math.sqrt(dx*dx+dy*dy);
-    if(d>ORB_R-4){n.x=cx+(dx/d)*(ORB_R-4);n.y=cy+(dy/d)*(ORB_R-4);}
+    n.orbitA += n.orbitS*sm; n.pulse += n.pulseS*sm;
+    const bx2 = n.bx + Math.cos(n.orbitA)*n.orbitR;
+    const by2 = n.by + Math.sin(n.orbitA)*n.orbitR;
+    if (burstSpread > 0.01) {
+      // Nodes fly OUT: lerp from base (spread=0) to burst target (spread=1)
+      n.x = bx2 + (n.burstTx - bx2) * burstSpread;
+      n.y = by2 + (n.burstTy - by2) * burstSpread;
+    } else {
+      n.x = bx2; n.y = by2;
+      const dx=n.x-cx,dy=n.y-cy,d=Math.sqrt(dx*dx+dy*dy);
+      if(d>ORB_R-4){n.x=cx+(dx/d)*(ORB_R-4);n.y=cy+(dy/d)*(ORB_R-4);}
+    }
   });
 
   ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
-
-  const DIST = 55 + energy*28 + burstEnergy*40;
-  for(let i=0;i<nodes.length;i++){
-    for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j];
-      const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<DIST){
-        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=`rgba(80,40,200,${(1-d/DIST)*(0.35+energy*0.35)})`;
-        ctx.lineWidth=0.6+energy*0.4; ctx.stroke();
-      }
-    }
+  if (burstSpread < 0.05) {
+    ctx.beginPath(); ctx.arc(cx,cy,ORB_R-1,0,Math.PI*2); ctx.clip();
   }
 
-  nodes.forEach(n=>{
-    const g=Math.sin(n.pulse)*0.35+0.65;
-    const nr=n.r*(1+energy*0.5);
-    const ng=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,nr*5);
-    ng.addColorStop(0,`rgba(80,40,200,${0.18*g*gm})`);
-    ng.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(n.x,n.y,nr*5,0,Math.PI*2); ctx.fillStyle=ng; ctx.fill();
-    ctx.beginPath(); ctx.arc(n.x,n.y,nr,0,Math.PI*2);
-    ctx.fillStyle=`rgba(80,50,210,${0.75+0.25*g})`; ctx.fill();
-  });
-
-  ctx.restore();
-
-  ctx.save();
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-
-  ctx.font='bold 56px Inter, Georgia, serif';
-  ctx.shadowColor=`rgba(80,40,200,${0.5+energy*0.3})`;
-  ctx.shadowBlur=22+energy*20;
-  ctx.fillStyle='#2a1a6e';
-  ctx.fillText('Safiya AI', cx, cy-14);
-  ctx.shadowBlur=0;
-
-  ctx.font='500 15px Inter, Georgia, serif';
-  ctx.shadowColor='rgba(80,40,200,0.4)';
-  ctx.shadowBlur=10+energy*8;
-  ctx.fillStyle=`rgba(80,60,180,${0.75+energy*0.15})`;
-  ctx.fillText('by Umrbektp', cx, cy+26);
-  ctx.shadowBlur=0;
-  ctx.restore();
-
-  requestAnimationFrame(drawFrame);
-}
-
-window.addEventListener('resize', initCanvas);
-initCanvas();
-drawFrame();
-</script>
-</body>
-</html>
+  const DIST = 55 + energy*28 
