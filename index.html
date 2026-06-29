@@ -8,9 +8,9 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; overflow: hidden; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 45%, #dbeafe 100%); color: #1e1b4b; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0ede8; color: #1e1b4b; }
     #orb-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-    #app { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    #app { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; }
     .hidden { display: none !important; }
 
     /* Welcome */
@@ -33,9 +33,9 @@
     #start-btn:active { opacity: 0.85; transform: scale(0.98); }
     #start-btn:disabled { opacity: 0.6; }
 
-    /* Main */
-    #main { flex: 1; display: flex; flex-direction: column; }
-    #header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.6); flex-shrink: 0; }
+    /* Main — absolute, fills screen, orb behind everything */
+    #main { position: absolute; inset: 0; }
+    #header { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.6); }
     .header-left { display: flex; flex-direction: column; }
     .header-title { font-size: 16px; font-weight: 700; color: #1e1b4b; }
     .header-sub { font-size: 12px; color: #7c3aed; font-weight: 500; text-transform: capitalize; }
@@ -43,22 +43,16 @@
     .icon-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1.5px solid rgba(124,58,237,0.25); border-radius: 10px; background: rgba(255,255,255,0.7); color: #7c3aed; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
     #lang-btn { font-size: 12px; letter-spacing: 0.04em; width: 42px; }
 
-    /* Transcript */
-    #transcript { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-    #transcript::-webkit-scrollbar { display: none; }
-    .msg { display: flex; flex-direction: column; max-width: 82%; }
-    .msg.user      { align-self: flex-end;   align-items: flex-end;   }
-    .msg.assistant { align-self: flex-start; align-items: flex-start; }
-    .msg.system    { align-self: center; max-width: 95%; }
-    .msg-label { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 3px; letter-spacing: 0.04em; }
-    .msg-bubble { padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.55; }
-    .msg.user .msg-bubble { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: white; border-bottom-right-radius: 5px; }
-    .msg.assistant .msg-bubble { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.9); color: #1e1b4b; border-bottom-left-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-    .msg.system .msg-bubble { background: rgba(239,235,255,0.7); color: #7c3aed; font-size: 13px; border-radius: 12px; text-align: center; }
-    #interim-live { align-self: flex-end; padding: 10px 14px; background: rgba(124,58,237,0.09); border: 1.5px dashed #c4b5fd; border-radius: 18px; border-bottom-right-radius: 5px; font-size: 14px; color: #7c3aed; max-width: 82%; font-style: italic; }
+    /* Subtitle — captions style, fades in/out, never causes scroll */
+    #subtitle { position: absolute; left: 20px; right: 20px; bottom: 130px; z-index: 2; text-align: center; font-size: 16px; line-height: 1.6; border-radius: 16px; padding: 12px 18px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+    #subtitle.sub-user     { color: #7c3aed; font-style: italic; font-size: 14px; }
+    #subtitle.sub-interim  { color: #9ca3af; font-style: italic; font-size: 14px; }
+    #subtitle.sub-assistant{ color: #1e1b4b; background: rgba(255,255,255,0.78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    #subtitle.sub-thinking { color: #9ca3af; font-size: 22px; letter-spacing: 4px; }
+    #subtitle.sub-error    { color: #dc2626; font-size: 14px; }
 
-    /* Controls */
-    #controls { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 14px 20px 22px; background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.6); gap: 10px; }
+    /* Controls — anchored to bottom, cannot be pushed by anything */
+    #controls { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; padding: 14px 20px; padding-bottom: max(22px, env(safe-area-inset-bottom, 22px)); background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.6); gap: 10px; }
     #status-text { font-size: 13px; font-weight: 500; color: #9ca3af; text-align: center; min-height: 18px; }
     #status-text.listening { color: #7c3aed; }
     #status-text.thinking  { color: #2563eb; }
@@ -99,10 +93,6 @@
     .lb-mins { font-size: 11px; color: #9ca3af; }
     .lb-empty { text-align: center; padding: 32px; color: #9ca3af; font-size: 14px; }
 
-    .typing-dots span { display: inline-block; width: 6px; height: 6px; background: #7c3aed; border-radius: 50%; margin: 0 2px; animation: dot-bounce 1.2s infinite ease-in-out; }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dot-bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -143,7 +133,7 @@
         <button class="icon-btn" id="lb-btn">🏆</button>
       </div>
     </div>
-    <div id="transcript"></div>
+    <div id="subtitle"></div>
     <div id="controls">
       <p id="status-text">Slide to start talking</p>
       <div class="mic-row">
@@ -184,7 +174,7 @@
 class Orb {
   constructor(canvas) {
     this.canvas = canvas; this.ctx = canvas.getContext('2d');
-    this.nodes = []; this.rings = []; this.state = 'IDLE'; this.burst = 0; this.frame = 0;
+    this.nodes = []; this.state = 'IDLE'; this.burst = 0; this.frame = 0;
     window.addEventListener('resize', () => this._resize());
     this._resize(); this._mkNodes(); this._loop();
   }
@@ -192,57 +182,117 @@ class Orb {
     this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;
     this.cx = this.canvas.width/2; this.cy = this.canvas.height*0.36;
     const m = Math.min(this.canvas.width, this.canvas.height);
-    this.baseR = m*0.20; this.burstR = m*0.72; this.connD = this.baseR*0.70;
+    this.baseR = m*0.20; this.burstR = m*0.70; this.connD = this.baseR*0.75;
   }
-  _mkNodes(N=65) {
+  _mkNodes(N=60) {
     this.nodes = [];
-    for (let i=0;i<N;i++) { const a=Math.random()*Math.PI*2, r=Math.random()*this.baseR; this.nodes.push({x:Math.cos(a)*r,y:Math.sin(a)*r,vx:0,vy:0,angle:a,baseR:r,size:1+Math.random()*1.8}); }
+    for (let i=0;i<N;i++) {
+      const a = Math.random()*Math.PI*2;
+      const r = 4 + Math.random()*(this.baseR-4);
+      this.nodes.push({
+        x: Math.cos(a)*r, y: Math.sin(a)*r, vx:0, vy:0,
+        angle: a, baseR: r,
+        size: 1.2 + Math.random()*1.6,
+        // ripple+scatter properties
+        scatterAngle: Math.random()*Math.PI*2,     // direction node flies when speaking
+        scatterPhase: Math.random()*Math.PI*2,     // stagger the wave timing
+        baseNorm:     r / (this.baseR || 1),       // 0=center, 1=edge — drives ripple order
+      });
+    }
   }
   setState(s) { this.state = s; }
   _ease(t) { return t<0.5?2*t*t:-1+(4-2*t)*t; }
   _tick() {
     this.frame++;
-    if (this.state==='SPEAKING') this.burst=Math.min(1,this.burst+0.07);
-    else this.burst=Math.max(0,this.burst-0.012);
-    if (this.state==='SPEAKING'&&this.frame%18===0) this.rings.push({r:this.baseR*0.5,a:0.6});
-    this.rings.forEach(r=>{r.r+=5;r.a-=0.011;}); this.rings=this.rings.filter(r=>r.a>0);
-    const env=this.baseR+(this.burstR-this.baseR)*this._ease(this.burst);
-    const jitter=this.state==='LISTENING'?0.28:this.state==='SPEAKING'?0.45:0.04;
-    this.nodes.forEach(n=>{
-      n.vx+=(Math.random()-.5)*jitter; n.vy+=(Math.random()-.5)*jitter;
-      const tr=n.baseR/this.baseR*env;
-      n.vx+=(Math.cos(n.angle)*tr-n.x)*0.05; n.vy+=(Math.sin(n.angle)*tr-n.y)*0.05;
-      n.vx*=0.86; n.vy*=0.86; n.x+=n.vx; n.y+=n.vy;
+    if (this.state==='SPEAKING') this.burst = Math.min(1, this.burst+0.055);
+    else                          this.burst = Math.max(0, this.burst-0.018);
+
+    const eased = this._ease(this.burst);
+
+    this.nodes.forEach(n => {
+      let tx, ty, spring;
+
+      if (this.state === 'SPEAKING') {
+        // Ripple wave: inner nodes (baseNorm~0) lead, outer follow.
+        // scatterPhase randomises each node so no two move in lockstep.
+        const wave = (Math.sin(this.frame*0.075 - n.baseNorm*Math.PI*2.2 + n.scatterPhase) + 1) / 2;
+        // Mix: home position at burst=0, scatter position at burst=1
+        const homeDist = n.baseR;
+        const scatterDist = this.baseR*0.18 + wave * (this.burstR*0.88 - this.baseR*0.18);
+        const dist = homeDist + eased*(scatterDist - homeDist);
+        const angle = n.angle + eased*(n.scatterAngle - n.angle);
+        tx = Math.cos(angle)*dist; ty = Math.sin(angle)*dist;
+        spring = 0.045;
+      } else {
+        // Return home; env shrinks/stays at baseR
+        const env = n.baseR * (1 - eased) + n.baseR * eased; // just home
+        tx = Math.cos(n.angle)*n.baseR; ty = Math.sin(n.angle)*n.baseR;
+        spring = 0.05;
+      }
+
+      const jitter = this.state==='LISTENING'?0.22 : this.state==='SPEAKING'?0.35 : 0.03;
+      n.vx += (tx - n.x)*spring + (Math.random()-.5)*jitter;
+      n.vy += (ty - n.y)*spring + (Math.random()-.5)*jitter;
+      n.vx *= 0.84; n.vy *= 0.84;
+      n.x += n.vx; n.y += n.vy;
     });
   }
   _draw() {
-    const {ctx,cx,cy,burst,baseR,burstR,connD,frame}=this;
-    ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
-    const glowR=baseR+(burstR-baseR)*burst*0.8;
-    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,glowR*1.3);
-    g.addColorStop(0,`rgba(124,58,237,${0.08+burst*0.10})`); g.addColorStop(0.5,`rgba(99,102,241,${0.05+burst*0.06})`); g.addColorStop(1,'rgba(37,99,235,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,glowR*1.5,0,Math.PI*2); ctx.fill();
-    if (burst<0.7){ctx.save();ctx.setLineDash([5,10]);ctx.strokeStyle=`rgba(167,139,250,${(0.7-burst)*0.45})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,baseR,0,Math.PI*2);ctx.stroke();ctx.restore();}
-    this.rings.forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r.r,0,Math.PI*2);ctx.strokeStyle=`rgba(124,58,237,${r.a})`;ctx.lineWidth=1.5;ctx.stroke();});
-    const dynConn=connD*(1+burst*1.4);
-    for(let i=0;i<this.nodes.length;i++){for(let j=i+1;j<this.nodes.length;j++){
-      const a=this.nodes[i],b=this.nodes[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<dynConn){const al=(1-d/dynConn)*(0.25+burst*0.3),rv=Math.round(124-burst*50),gv=Math.round(58+burst*80);
-      ctx.strokeStyle=`rgba(${rv},${gv},237,${al})`;ctx.lineWidth=0.6+burst*0.4;ctx.beginPath();ctx.moveTo(cx+a.x,cy+a.y);ctx.lineTo(cx+b.x,cy+b.y);ctx.stroke();}
-    }}
+    const {ctx,cx,cy,burst,baseR,burstR,connD,frame} = this;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Subtle center circle
+    ctx.globalAlpha = 0.07 + burst*0.08;
+    ctx.beginPath(); ctx.arc(cx, cy, baseR*0.55, 0, Math.PI*2);
+    ctx.fillStyle = '#534AB7'; ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Node color shifts: gray → purple → deep purple
+    const colIdle = '#C8C3BC', colListen = '#7F77DD', colSpeak = '#3C3489';
+    const col = burst < 0.25 ? colIdle : burst < 0.6 ? colListen : colSpeak;
+
+    // Connections — distance threshold grows as nodes spread
+    const dynConn = connD*(1 + burst*1.8);
+    ctx.lineWidth = 0.7 + burst*0.5;
+    for(let i=0;i<this.nodes.length;i++){
+      for(let j=i+1;j<this.nodes.length;j++){
+        const a=this.nodes[i], b=this.nodes[j];
+        const dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<dynConn){
+          ctx.strokeStyle = col;
+          ctx.globalAlpha = (1-d/dynConn)*(0.18+burst*0.28);
+          ctx.beginPath(); ctx.moveTo(cx+a.x,cy+a.y); ctx.lineTo(cx+b.x,cy+b.y); ctx.stroke();
+        }
+      }
+    }
+
+    // Nodes
     this.nodes.forEach(n=>{
-      const nx=cx+n.x,ny=cy+n.y,s=n.size*(1+burst*0.8);
-      const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,s*5);
-      ng.addColorStop(0,`rgba(124,58,237,${0.6+burst*0.35})`); ng.addColorStop(1,'rgba(124,58,237,0)');
-      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(nx,ny,s*5,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle=`rgba(${Math.round(90-burst*30)},${Math.round(35+burst*40)},220,0.9)`;
-      ctx.beginPath();ctx.arc(nx,ny,s,0,Math.PI*2);ctx.fill();
+      const s = n.size*(1+burst*0.55);
+      ctx.globalAlpha = 0.65 + burst*0.3;
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(cx+n.x, cy+n.y, s, 0, Math.PI*2); ctx.fill();
     });
-    if(this.state==='LISTENING'){const rr=baseR*0.96+Math.sin(frame*0.14)*baseR*0.06;ctx.beginPath();ctx.arc(cx,cy,rr,0,Math.PI*2);ctx.strokeStyle=`rgba(124,58,237,${0.20+Math.sin(frame*0.14)*0.09})`;ctx.lineWidth=2.5;ctx.stroke();}
-    const ta=Math.max(0,1-burst*2.2);
-    if(ta>0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(255,255,255,0.9)';ctx.shadowBlur=12;
-    ctx.font=`bold ${Math.round(baseR*0.48)}px -apple-system,BlinkMacSystemFont,sans-serif`;ctx.fillStyle=`rgba(30,27,75,${ta*0.85})`;ctx.fillText('Safiya AI',cx,cy-baseR*0.09);
-    ctx.shadowBlur=8;ctx.font=`${Math.round(baseR*0.21)}px -apple-system,BlinkMacSystemFont,sans-serif`;ctx.fillStyle=`rgba(124,58,237,${ta*0.75})`;ctx.fillText('by Umrbektp',cx,cy+baseR*0.28);ctx.restore();}
+    ctx.globalAlpha = 1;
+
+    // Listening pulse ring
+    if(this.state==='LISTENING'){
+      const rr = baseR*0.92 + Math.sin(frame*0.13)*baseR*0.07;
+      ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(127,119,221,${0.22+Math.sin(frame*0.13)*0.08})`;
+      ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    // Center text fades out as nodes burst
+    const ta = Math.max(0, 1 - burst*2.6);
+    if(ta > 0){
+      ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font = `600 ${Math.round(baseR*0.44)}px -apple-system,BlinkMacSystemFont,sans-serif`;
+      ctx.fillStyle = `rgba(44,44,42,${ta*0.82})`; ctx.fillText('Safiya AI', cx, cy-baseR*0.09);
+      ctx.font = `400 ${Math.round(baseR*0.19)}px -apple-system,BlinkMacSystemFont,sans-serif`;
+      ctx.fillStyle = `rgba(95,94,90,${ta*0.65})`; ctx.fillText('by Umrbektp', cx, cy+baseR*0.26);
+      ctx.restore();
+    }
   }
   _loop() { this._tick(); this._draw(); requestAnimationFrame(()=>this._loop()); }
 }
@@ -262,15 +312,36 @@ let isProcessing= false;  // waiting for Claude
 let isSpeaking  = false;  // TTS playing
 let currentAudio= null;
 let ttsFetchCtrl= null;
+let ttsEndTime  = 0;      // timestamp when TTS last finished — used to ignore echo
 
 // Telegram
 const tg=window.Telegram?.WebApp, tgUser=tg?.initDataUnsafe?.user;
 const tgName=tgUser?.first_name?(tgUser.last_name?`${tgUser.first_name} ${tgUser.last_name}`:tgUser.first_name):null;
 if(tg){try{tg.ready();tg.expand();}catch(_){}}
 
+// ── Subtitle captions ──────────────────────────
+let _subTimer = null;
+function showSubtitle(text, type) {
+  if (!elSubtitle) return;
+  clearTimeout(_subTimer);
+  elSubtitle.textContent = text;
+  elSubtitle.className = 'sub-' + type;
+  elSubtitle.style.opacity = '1';
+}
+function fadeSubtitle(delay = 0) {
+  clearTimeout(_subTimer);
+  _subTimer = setTimeout(() => {
+    if (elSubtitle) elSubtitle.style.opacity = '0';
+    _subTimer = setTimeout(() => { if (elSubtitle) elSubtitle.textContent = ''; }, 700);
+  }, delay);
+}
+
+
+
+
 const $=id=>document.getElementById(id);
 const elWelcome=$('welcome'),elMain=$('main'),elGreeting=$('greeting'),elNameWrap=$('name-input-wrap');
-const elNameInput=$('name-input'),elStartBtn=$('start-btn'),elTranscript=$('transcript');
+const elNameInput=$('name-input'),elStartBtn=$('start-btn'),elSubtitle=$('subtitle');
 const elStatus=$('status-text'),elMicCheck=$('mic-check'),elHeaderName=$('header-name');
 const elHeaderLvl=$('header-level'),elLangBtn=$('lang-btn'),elLbBtn=$('lb-btn');
 const elLbModal=$('lb-modal'),elLbClose=$('lb-close'),elLbList=$('lb-list');
@@ -305,83 +376,79 @@ async function handleStart() {
   sessionStart=Date.now();
   elWelcome.classList.add('hidden'); elMain.classList.remove('hidden');
   elHeaderName.textContent=name.split(' ')[0]; elHeaderLvl.textContent=selectedLevel;
-  addMsg('assistant',`Hey! Let's do this. What do you want to talk about today?`);
+  showSubtitle(`Hey! Let's do this. What do you want to talk about today?`, 'assistant');
+  fadeSubtitle(4000);
 }
 
 // ══════════════════════════════════════════════
-//  MIC — one persistent recognition session
+//  MIC
 // ══════════════════════════════════════════════
 
 function micStart() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { alert('Speech recognition not supported. Use Chrome on Android or desktop.'); elMicCheck.checked=false; return; }
-
   micOn = true;
   setStatus('Listening…', 'listening');
   orb.setState('LISTENING');
+  _launchRec();
+}
 
+function _launchRec() {
+  if (!micOn || isSpeaking || isProcessing) return;
+  ttsEndTime = 0; // mic is open — cooldown window has passed, clear the echo guard
+
+  // Always create a FRESH instance — reusing after onend is unreliable on mobile
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recog = new SR();
-  recog.continuous     = true;   // ← stays alive the whole session
+  recog.continuous     = true;
   recog.interimResults = true;
   recog.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
 
   recog.onresult = evt => {
-    // While Safiya is busy, silently discard all speech
     if (isProcessing || isSpeaking) return;
-
     let interim = '', final = '';
     for (let i = evt.resultIndex; i < evt.results.length; i++) {
       const t = evt.results[i][0].transcript;
       if (evt.results[i].isFinal) final += t; else interim += t;
     }
-
-    // Live interim display
-    let el = document.getElementById('interim-live');
-    if (interim) {
-      if (!el) { el=document.createElement('div'); el.id='interim-live'; elTranscript.appendChild(el); }
-      el.textContent = interim;
-      elTranscript.scrollTop = elTranscript.scrollHeight;
-    } else if (el && !final) {
-      el.remove();
-    }
-
-    if (final.trim()) {
-      document.getElementById('interim-live')?.remove();
-      handleSpeech(final.trim());
-    }
+    if (interim) showSubtitle(interim, 'interim');
+    if (final.trim()) handleSpeech(final.trim());
   };
 
-  // Browser sometimes stops continuous recognition (timeout, network, etc.)
-  // Just restart it automatically if mic is still on
+  // Chrome stops recognition after silence — restart immediately with a new instance
   recog.onend = () => {
-    if (micOn) {
-      setTimeout(() => {
-        if (micOn) { try { recog.start(); } catch(_) {} }
-      }, 300);
+    if (micOn && !isSpeaking && !isProcessing) {
+      setTimeout(_launchRec, 50); // near-instant restart
     }
   };
 
   recog.onerror = evt => {
-    if (evt.error === 'aborted') return; // we caused this
-    if (micOn) {
-      setTimeout(() => {
-        if (micOn) { try { recog.start(); } catch(_) {} }
-      }, 500);
+    if (evt.error === 'aborted') return;
+    if (micOn && !isSpeaking && !isProcessing) {
+      setTimeout(_launchRec, 100);
     }
   };
 
-  try { recog.start(); } catch(_) {}
+  try { recog.start(); } catch(_) { setTimeout(_launchRec, 200); }
+}
+
+function _killRec() {
+  if (recog) {
+    recog.onresult = null;  // drop any queued transcription results
+    recog.onend    = null;  // prevent auto-restart on stop
+    recog.onerror  = null;
+    try { recog.abort(); } catch(_) {}  // abort is harder than stop — kills immediately
+    recog = null;
+  }
 }
 
 function micStop() {
   micOn = false;
-  // Stop audio if Safiya is speaking
+  _killRec();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
   isSpeaking = false; isProcessing = false;
-  try { recog?.stop(); } catch(_) {}
-  recog = null;
-  document.getElementById('interim-live')?.remove();
+  fadeSubtitle();
   orb.setState('IDLE');
   setStatus('Slide to start talking', '');
 }
@@ -392,17 +459,15 @@ function micStop() {
 
 async function handleSpeech(text) {
   if (!text) return;
-
-  // Guard: don't double-process
   isProcessing = true;
 
-  addMsg('user', text);
+  showSubtitle(text, 'user');
   history.push({ role: 'user', content: text });
   if (history.length > 16) history = history.slice(-16);
 
   setStatus('Safiya is thinking…', 'thinking');
   orb.setState('IDLE');
-  const typingEl = addTyping();
+  setTimeout(() => showSubtitle('· · ·', 'thinking'), 600);
 
   try {
     const data = await apiPost('/chat', {
@@ -410,17 +475,15 @@ async function handleSpeech(text) {
       level: student?.level || selectedLevel,
       history: history.slice(-8),
     });
-    typingEl.remove();
     const reply = data.reply;
     history.push({ role: 'assistant', content: reply });
-    addMsg('assistant', reply);
     sessionMsgs++;
     isProcessing = false;
     await speak(reply);
   } catch(err) {
-    typingEl.remove();
     isProcessing = false;
-    addMsg('system', 'Something went wrong. Try again!');
+    showSubtitle('Something went wrong. Try again!', 'error');
+    fadeSubtitle(3000);
     if (micOn) { setStatus('Listening…','listening'); orb.setState('LISTENING'); }
     else { setStatus('Slide to start talking',''); orb.setState('IDLE'); }
   }
@@ -429,9 +492,11 @@ async function handleSpeech(text) {
 async function speak(text) {
   if (!text) return;
   isSpeaking = true;
+  _killRec();
   ttsFetchCtrl = new AbortController();
   setStatus('Safiya is speaking…', 'speaking');
   orb.setState('SPEAKING');
+  showSubtitle(text, 'assistant');
 
   try {
     const res = await fetch(`${BACKEND}/tts`, {
@@ -447,9 +512,15 @@ async function speak(text) {
     if (err.name !== 'AbortError') console.error('TTS:', err);
   } finally {
     currentAudio=null; ttsFetchCtrl=null; isSpeaking=false;
-    // Recognition is still running (continuous=true), just update UI
-    if (micOn) { setStatus('Listening…','listening'); orb.setState('LISTENING'); }
-    else        { setStatus('Slide to start talking',''); orb.setState('IDLE'); }
+    fadeSubtitle(500);
+    if (micOn) {
+      setStatus('Listening…','listening');
+      orb.setState('LISTENING');
+      setTimeout(_launchRec, 800);
+    } else {
+      setStatus('Slide to start talking','');
+      orb.setState('IDLE');
+    }
   }
 }
 
@@ -467,8 +538,6 @@ async function showLeaderboard() {
 }
 
 // ── Helpers ───────────────────────────────────
-function addMsg(role,text){const w=document.createElement('div');w.className=`msg ${role}`;if(role==='assistant'){const l=document.createElement('p');l.className='msg-label';l.textContent='SAFIYA';w.appendChild(l);}const b=document.createElement('div');b.className='msg-bubble';b.textContent=text;w.appendChild(b);elTranscript.appendChild(w);requestAnimationFrame(()=>elTranscript.scrollTo({top:elTranscript.scrollHeight,behavior:'smooth'}));return w;}
-function addTyping(){const w=document.createElement('div');w.className='msg assistant';const l=document.createElement('p');l.className='msg-label';l.textContent='SAFIYA';w.appendChild(l);const b=document.createElement('div');b.className='msg-bubble';b.innerHTML='<span class="typing-dots"><span></span><span></span><span></span></span>';w.appendChild(b);elTranscript.appendChild(w);elTranscript.scrollTo({top:elTranscript.scrollHeight,behavior:'smooth'});return w;}
 function setStatus(t,c=''){elStatus.textContent=t;elStatus.className=c;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 async function apiPost(path,body){const res=await fetch(`${BACKEND}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||`HTTP ${res.status}`);}return res.json();}
