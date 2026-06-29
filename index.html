@@ -8,83 +8,43 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; overflow: hidden; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 45%, #dbeafe 100%);
-      color: #1e1b4b;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 45%, #dbeafe 100%); color: #1e1b4b; }
     #orb-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-
-    #app {
-      position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column;
-      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
-    }
-
+    #app { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
     .hidden { display: none !important; }
 
-    /* ── Welcome ── */
+    /* Welcome */
     #welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px; }
-    .welcome-card {
-      background: rgba(255,255,255,0.78); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255,255,255,0.92); border-radius: 28px; padding: 36px 28px 28px;
-      width: 100%; max-width: 390px; box-shadow: 0 12px 40px rgba(124,58,237,0.13);
-    }
+    .welcome-card { background: rgba(255,255,255,0.78); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border: 1px solid rgba(255,255,255,0.92); border-radius: 28px; padding: 36px 28px 28px; width: 100%; max-width: 390px; box-shadow: 0 12px 40px rgba(124,58,237,0.13); }
     .app-logo { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c3aed; margin-bottom: 20px; }
     #greeting { font-size: 26px; font-weight: 700; color: #1e1b4b; line-height: 1.2; margin-bottom: 6px; }
     .welcome-sub { font-size: 14px; color: #6b7280; margin-bottom: 22px; }
     #name-input-wrap { margin-bottom: 18px; }
-    #name-input {
-      width: 100%; padding: 13px 16px; border: 2px solid #e5e7eb; border-radius: 14px;
-      font-size: 16px; font-family: inherit; color: #1e1b4b; background: rgba(255,255,255,0.9);
-      outline: none; transition: border-color 0.2s;
-    }
+    #name-input { width: 100%; padding: 13px 16px; border: 2px solid #e5e7eb; border-radius: 14px; font-size: 16px; font-family: inherit; color: #1e1b4b; background: rgba(255,255,255,0.9); outline: none; transition: border-color 0.2s; }
     #name-input:focus { border-color: #7c3aed; }
     #name-input::placeholder { color: #9ca3af; }
     .level-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 10px; }
     .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
-    .lvl-btn {
-      padding: 11px 12px; border: 2px solid #e5e7eb; border-radius: 14px;
-      background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500;
-      color: #6b7280; cursor: pointer; transition: all 0.18s; text-align: left; line-height: 1.4; touch-action: manipulation;
-    }
+    .lvl-btn { padding: 11px 12px; border: 2px solid #e5e7eb; border-radius: 14px; background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.18s; text-align: left; line-height: 1.4; touch-action: manipulation; }
     .lvl-btn strong { display: block; font-size: 14px; color: #374151; }
     .lvl-btn.active { border-color: #7c3aed; background: rgba(124,58,237,0.07); color: #7c3aed; }
     .lvl-btn.active strong { color: #7c3aed; }
-    #start-btn {
-      width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-      color: white; border: none; border-radius: 18px; font-size: 16px; font-weight: 700;
-      cursor: pointer; touch-action: manipulation; transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
-    }
+    #start-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: white; border: none; border-radius: 18px; font-size: 16px; font-weight: 700; cursor: pointer; touch-action: manipulation; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(124,58,237,0.35); }
     #start-btn:active { opacity: 0.85; transform: scale(0.98); }
     #start-btn:disabled { opacity: 0.6; }
 
-    /* ── Main ── */
+    /* Main */
     #main { flex: 1; display: flex; flex-direction: column; }
-
-    #header {
-      display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;
-      background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.6); flex-shrink: 0;
-    }
+    #header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.6); flex-shrink: 0; }
     .header-left { display: flex; flex-direction: column; }
     .header-title { font-size: 16px; font-weight: 700; color: #1e1b4b; }
     .header-sub { font-size: 12px; color: #7c3aed; font-weight: 500; text-transform: capitalize; }
     .header-actions { display: flex; gap: 8px; align-items: center; }
-    .icon-btn {
-      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
-      border: 1.5px solid rgba(124,58,237,0.25); border-radius: 10px;
-      background: rgba(255,255,255,0.7); color: #7c3aed; font-size: 14px; font-weight: 700;
-      cursor: pointer; touch-action: manipulation;
-    }
+    .icon-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1.5px solid rgba(124,58,237,0.25); border-radius: 10px; background: rgba(255,255,255,0.7); color: #7c3aed; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
     #lang-btn { font-size: 12px; letter-spacing: 0.04em; width: 42px; }
 
-    /* ── Transcript ── */
-    #transcript {
-      flex: 1; overflow-y: auto; padding: 16px 16px 8px;
-      display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch;
-    }
+    /* Transcript */
+    #transcript { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
     #transcript::-webkit-scrollbar { display: none; }
     .msg { display: flex; flex-direction: column; max-width: 82%; }
     .msg.user      { align-self: flex-end;   align-items: flex-end;   }
@@ -92,72 +52,36 @@
     .msg.system    { align-self: center; max-width: 95%; }
     .msg-label { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 3px; letter-spacing: 0.04em; }
     .msg-bubble { padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.55; }
-    .msg.user .msg-bubble {
-      background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-      color: white; border-bottom-right-radius: 5px;
-    }
-    .msg.assistant .msg-bubble {
-      background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.9); color: #1e1b4b; border-bottom-left-radius: 5px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    }
-    .msg.system .msg-bubble {
-      background: rgba(239,235,255,0.7); color: #7c3aed; font-size: 13px; border-radius: 12px; text-align: center;
-    }
-    .interim-bubble {
-      align-self: flex-end; padding: 10px 14px; background: rgba(124,58,237,0.09);
-      border: 1.5px dashed #c4b5fd; border-radius: 18px; border-bottom-right-radius: 5px;
-      font-size: 14px; color: #7c3aed; max-width: 82%; font-style: italic;
-    }
+    .msg.user .msg-bubble { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: white; border-bottom-right-radius: 5px; }
+    .msg.assistant .msg-bubble { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.9); color: #1e1b4b; border-bottom-left-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .msg.system .msg-bubble { background: rgba(239,235,255,0.7); color: #7c3aed; font-size: 13px; border-radius: 12px; text-align: center; }
+    #interim-live { align-self: flex-end; padding: 10px 14px; background: rgba(124,58,237,0.09); border: 1.5px dashed #c4b5fd; border-radius: 18px; border-bottom-right-radius: 5px; font-size: 14px; color: #7c3aed; max-width: 82%; font-style: italic; }
 
-    /* ── Controls ── */
-    #controls {
-      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-      padding: 14px 20px 22px;
-      background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.6); gap: 10px;
-    }
-    #status-text {
-      font-size: 13px; font-weight: 500; color: #9ca3af; text-align: center; min-height: 18px;
-    }
+    /* Controls */
+    #controls { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 14px 20px 22px; background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.6); gap: 10px; }
+    #status-text { font-size: 13px; font-weight: 500; color: #9ca3af; text-align: center; min-height: 18px; }
     #status-text.listening { color: #7c3aed; }
     #status-text.thinking  { color: #2563eb; }
     #status-text.speaking  { color: #059669; }
 
-    /* ── Mic slide toggle ── */
+    /* Mic toggle */
     .mic-row { display: flex; align-items: center; gap: 14px; }
     .mic-label { font-size: 13px; font-weight: 500; color: #9ca3af; }
-
     .mic-switch { position: relative; width: 88px; height: 46px; cursor: pointer; display: block; }
     .mic-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 3; }
-    .mic-track {
-      position: absolute; inset: 0; border-radius: 23px; background: #e5e7eb; transition: background 0.3s;
-    }
+    .mic-track { position: absolute; inset: 0; border-radius: 23px; background: #e5e7eb; transition: background 0.3s; }
     .mic-switch input:checked ~ .mic-track { background: linear-gradient(135deg, #7c3aed, #2563eb); }
-    .mic-thumb {
-      position: absolute; top: 5px; left: 5px; width: 36px; height: 36px; border-radius: 50%;
-      background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      pointer-events: none; display: flex; align-items: center; justify-content: center; color: #9ca3af;
-    }
+    .mic-thumb { position: absolute; top: 5px; left: 5px; width: 36px; height: 36px; border-radius: 50%; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
     .mic-switch input:checked ~ .mic-thumb { transform: translateX(42px); color: #7c3aed; }
-
     @keyframes mic-pulse {
-      0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 0 rgba(124,58,237,0.4); }
-      50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 10px rgba(124,58,237,0); }
+      0%,100% { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 0 rgba(124,58,237,0.4); }
+      50%      { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 10px rgba(124,58,237,0); }
     }
     .mic-switch input:checked ~ .mic-thumb { animation: mic-pulse 1.8s infinite; }
 
-    /* ── Leaderboard ── */
-    #lb-modal {
-      position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end;
-      background: rgba(30,27,75,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    }
-    .lb-sheet {
-      background: rgba(255,255,255,0.96); border-radius: 28px 28px 0 0;
-      padding-bottom: env(safe-area-inset-bottom); width: 100%; max-height: 70vh;
-      display: flex; flex-direction: column; box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
-    }
+    /* Leaderboard */
+    #lb-modal { position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end; background: rgba(30,27,75,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .lb-sheet { background: rgba(255,255,255,0.96); border-radius: 28px 28px 0 0; padding-bottom: env(safe-area-inset-bottom); width: 100%; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 -8px 32px rgba(0,0,0,0.12); }
     .lb-handle { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 12px auto 0; }
     .lb-header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
     .lb-title { font-size: 17px; font-weight: 700; color: #1e1b4b; }
@@ -175,20 +99,15 @@
     .lb-mins { font-size: 11px; color: #9ca3af; }
     .lb-empty { text-align: center; padding: 32px; color: #9ca3af; font-size: 14px; }
 
-    /* Typing dots */
     .typing-dots span { display: inline-block; width: 6px; height: 6px; background: #7c3aed; border-radius: 50%; margin: 0 2px; animation: dot-bounce 1.2s infinite ease-in-out; }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dot-bounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30%            { transform: translateY(-6px); opacity: 1; }
-    }
+    @keyframes dot-bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
   </style>
 </head>
 <body>
 
 <canvas id="orb-canvas"></canvas>
-
 <div id="app">
 
   <!-- WELCOME -->
@@ -196,8 +115,7 @@
     <div class="welcome-card">
       <p class="app-logo">Safiya AI</p>
       <div id="name-input-wrap" class="hidden">
-        <input type="text" id="name-input" placeholder="What's your name?" maxlength="30"
-               autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="text" id="name-input" placeholder="What's your name?" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
       <h1 id="greeting">Hey there!</h1>
       <p class="welcome-sub">Pick your English level to start.</p>
@@ -225,9 +143,7 @@
         <button class="icon-btn" id="lb-btn">🏆</button>
       </div>
     </div>
-
     <div id="transcript"></div>
-
     <div id="controls">
       <p id="status-text">Slide to start talking</p>
       <div class="mic-row">
@@ -263,349 +179,222 @@
 'use strict';
 
 // ══════════════════════════════════════════════
-//  ORB CANVAS
+//  ORB
 // ══════════════════════════════════════════════
-
 class Orb {
   constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx    = canvas.getContext('2d');
-    this.nodes  = [];
-    this.rings  = [];
-    this.state  = 'IDLE';
-    this.burst  = 0;
-    this.frame  = 0;
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.nodes = []; this.rings = []; this.state = 'IDLE'; this.burst = 0; this.frame = 0;
     window.addEventListener('resize', () => this._resize());
-    this._resize();
-    this._mkNodes();
-    this._loop();
+    this._resize(); this._mkNodes(); this._loop();
   }
-
   _resize() {
-    this.canvas.width  = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.cx = this.canvas.width  / 2;
-    this.cy = this.canvas.height * 0.36;
+    this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;
+    this.cx = this.canvas.width/2; this.cy = this.canvas.height*0.36;
     const m = Math.min(this.canvas.width, this.canvas.height);
-    this.baseR  = m * 0.20;
-    this.burstR = m * 0.72;
-    this.connD  = this.baseR * 0.70;
+    this.baseR = m*0.20; this.burstR = m*0.72; this.connD = this.baseR*0.70;
   }
-
-  _mkNodes(N = 65) {
+  _mkNodes(N=65) {
     this.nodes = [];
-    for (let i = 0; i < N; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = Math.random() * this.baseR;
-      this.nodes.push({ x: Math.cos(a)*r, y: Math.sin(a)*r, vx:0, vy:0, angle:a, baseR:r, size:1+Math.random()*1.8 });
-    }
+    for (let i=0;i<N;i++) { const a=Math.random()*Math.PI*2, r=Math.random()*this.baseR; this.nodes.push({x:Math.cos(a)*r,y:Math.sin(a)*r,vx:0,vy:0,angle:a,baseR:r,size:1+Math.random()*1.8}); }
   }
-
   setState(s) { this.state = s; }
-  _ease(t)    { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-
+  _ease(t) { return t<0.5?2*t*t:-1+(4-2*t)*t; }
   _tick() {
     this.frame++;
-    if (this.state === 'SPEAKING') this.burst = Math.min(1, this.burst + 0.07);
-    else                           this.burst = Math.max(0, this.burst - 0.012);
-
-    if (this.state === 'SPEAKING' && this.frame % 18 === 0)
-      this.rings.push({ r: this.baseR * 0.5, a: 0.6 });
-    this.rings.forEach(r => { r.r += 5; r.a -= 0.011; });
-    this.rings = this.rings.filter(r => r.a > 0);
-
-    const env    = this.baseR + (this.burstR - this.baseR) * this._ease(this.burst);
-    const jitter = this.state === 'LISTENING' ? 0.28 : this.state === 'SPEAKING' ? 0.45 : 0.04;
-
-    this.nodes.forEach(n => {
-      n.vx += (Math.random()-.5) * jitter;
-      n.vy += (Math.random()-.5) * jitter;
-      const tr = n.baseR / this.baseR * env;
-      n.vx += (Math.cos(n.angle)*tr - n.x) * 0.05;
-      n.vy += (Math.sin(n.angle)*tr - n.y) * 0.05;
-      n.vx *= 0.86; n.vy *= 0.86;
-      n.x  += n.vx; n.y  += n.vy;
+    if (this.state==='SPEAKING') this.burst=Math.min(1,this.burst+0.07);
+    else this.burst=Math.max(0,this.burst-0.012);
+    if (this.state==='SPEAKING'&&this.frame%18===0) this.rings.push({r:this.baseR*0.5,a:0.6});
+    this.rings.forEach(r=>{r.r+=5;r.a-=0.011;}); this.rings=this.rings.filter(r=>r.a>0);
+    const env=this.baseR+(this.burstR-this.baseR)*this._ease(this.burst);
+    const jitter=this.state==='LISTENING'?0.28:this.state==='SPEAKING'?0.45:0.04;
+    this.nodes.forEach(n=>{
+      n.vx+=(Math.random()-.5)*jitter; n.vy+=(Math.random()-.5)*jitter;
+      const tr=n.baseR/this.baseR*env;
+      n.vx+=(Math.cos(n.angle)*tr-n.x)*0.05; n.vy+=(Math.sin(n.angle)*tr-n.y)*0.05;
+      n.vx*=0.86; n.vy*=0.86; n.x+=n.vx; n.y+=n.vy;
     });
   }
-
   _draw() {
-    const { ctx, cx, cy, burst, baseR, burstR, connD, frame } = this;
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    const glowR = baseR + (burstR - baseR) * burst * 0.8;
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 1.3);
-    g.addColorStop(0,   `rgba(124,58,237,${0.08 + burst*0.10})`);
-    g.addColorStop(0.5, `rgba(99,102,241,${0.05 + burst*0.06})`);
-    g.addColorStop(1,   'rgba(37,99,235,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(cx, cy, glowR*1.5, 0, Math.PI*2); ctx.fill();
-
-    if (burst < 0.7) {
-      ctx.save(); ctx.setLineDash([5,10]);
-      ctx.strokeStyle = `rgba(167,139,250,${(0.7-burst)*0.45})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-
-    this.rings.forEach(r => {
-      ctx.beginPath(); ctx.arc(cx, cy, r.r, 0, Math.PI*2);
-      ctx.strokeStyle = `rgba(124,58,237,${r.a})`; ctx.lineWidth = 1.5; ctx.stroke();
+    const {ctx,cx,cy,burst,baseR,burstR,connD,frame}=this;
+    ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+    const glowR=baseR+(burstR-baseR)*burst*0.8;
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,glowR*1.3);
+    g.addColorStop(0,`rgba(124,58,237,${0.08+burst*0.10})`); g.addColorStop(0.5,`rgba(99,102,241,${0.05+burst*0.06})`); g.addColorStop(1,'rgba(37,99,235,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,glowR*1.5,0,Math.PI*2); ctx.fill();
+    if (burst<0.7){ctx.save();ctx.setLineDash([5,10]);ctx.strokeStyle=`rgba(167,139,250,${(0.7-burst)*0.45})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,baseR,0,Math.PI*2);ctx.stroke();ctx.restore();}
+    this.rings.forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r.r,0,Math.PI*2);ctx.strokeStyle=`rgba(124,58,237,${r.a})`;ctx.lineWidth=1.5;ctx.stroke();});
+    const dynConn=connD*(1+burst*1.4);
+    for(let i=0;i<this.nodes.length;i++){for(let j=i+1;j<this.nodes.length;j++){
+      const a=this.nodes[i],b=this.nodes[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<dynConn){const al=(1-d/dynConn)*(0.25+burst*0.3),rv=Math.round(124-burst*50),gv=Math.round(58+burst*80);
+      ctx.strokeStyle=`rgba(${rv},${gv},237,${al})`;ctx.lineWidth=0.6+burst*0.4;ctx.beginPath();ctx.moveTo(cx+a.x,cy+a.y);ctx.lineTo(cx+b.x,cy+b.y);ctx.stroke();}
+    }}
+    this.nodes.forEach(n=>{
+      const nx=cx+n.x,ny=cy+n.y,s=n.size*(1+burst*0.8);
+      const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,s*5);
+      ng.addColorStop(0,`rgba(124,58,237,${0.6+burst*0.35})`); ng.addColorStop(1,'rgba(124,58,237,0)');
+      ctx.fillStyle=ng;ctx.beginPath();ctx.arc(nx,ny,s*5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=`rgba(${Math.round(90-burst*30)},${Math.round(35+burst*40)},220,0.9)`;
+      ctx.beginPath();ctx.arc(nx,ny,s,0,Math.PI*2);ctx.fill();
     });
-
-    const dynConn = connD * (1 + burst * 1.4);
-    for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i+1; j < this.nodes.length; j++) {
-        const a = this.nodes[i], b = this.nodes[j];
-        const dx = a.x-b.x, dy = a.y-b.y, d = Math.sqrt(dx*dx+dy*dy);
-        if (d < dynConn) {
-          const alpha = (1-d/dynConn) * (0.25 + burst*0.3);
-          const rv = Math.round(124-burst*50), gv = Math.round(58+burst*80);
-          ctx.strokeStyle = `rgba(${rv},${gv},237,${alpha})`;
-          ctx.lineWidth = 0.6 + burst*0.4;
-          ctx.beginPath(); ctx.moveTo(cx+a.x, cy+a.y); ctx.lineTo(cx+b.x, cy+b.y); ctx.stroke();
-        }
-      }
-    }
-
-    this.nodes.forEach(n => {
-      const nx = cx+n.x, ny = cy+n.y, s = n.size*(1+burst*0.8);
-      const ng = ctx.createRadialGradient(nx,ny,0,nx,ny,s*5);
-      ng.addColorStop(0, `rgba(124,58,237,${0.6+burst*0.35})`);
-      ng.addColorStop(1, 'rgba(124,58,237,0)');
-      ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(nx,ny,s*5,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = `rgba(${Math.round(90-burst*30)},${Math.round(35+burst*40)},220,0.9)`;
-      ctx.beginPath(); ctx.arc(nx,ny,s,0,Math.PI*2); ctx.fill();
-    });
-
-    if (this.state === 'LISTENING') {
-      const rr = baseR*0.96 + Math.sin(frame*0.14)*baseR*0.06;
-      ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
-      ctx.strokeStyle = `rgba(124,58,237,${0.20+Math.sin(frame*0.14)*0.09})`;
-      ctx.lineWidth = 2.5; ctx.stroke();
-    }
-
-    // Centre text — fades out as web bursts outward
-    const textAlpha = Math.max(0, 1 - burst * 2.2);
-    if (textAlpha > 0) {
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 12;
-      ctx.font = `bold ${Math.round(baseR*0.48)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.fillStyle = `rgba(30,27,75,${textAlpha*0.85})`;
-      ctx.fillText('Safiya AI', cx, cy - baseR*0.09);
-      ctx.shadowBlur = 8;
-      ctx.font = `${Math.round(baseR*0.21)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.fillStyle = `rgba(124,58,237,${textAlpha*0.75})`;
-      ctx.fillText('by Umrbektp', cx, cy + baseR*0.28);
-      ctx.restore();
-    }
+    if(this.state==='LISTENING'){const rr=baseR*0.96+Math.sin(frame*0.14)*baseR*0.06;ctx.beginPath();ctx.arc(cx,cy,rr,0,Math.PI*2);ctx.strokeStyle=`rgba(124,58,237,${0.20+Math.sin(frame*0.14)*0.09})`;ctx.lineWidth=2.5;ctx.stroke();}
+    const ta=Math.max(0,1-burst*2.2);
+    if(ta>0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(255,255,255,0.9)';ctx.shadowBlur=12;
+    ctx.font=`bold ${Math.round(baseR*0.48)}px -apple-system,BlinkMacSystemFont,sans-serif`;ctx.fillStyle=`rgba(30,27,75,${ta*0.85})`;ctx.fillText('Safiya AI',cx,cy-baseR*0.09);
+    ctx.shadowBlur=8;ctx.font=`${Math.round(baseR*0.21)}px -apple-system,BlinkMacSystemFont,sans-serif`;ctx.fillStyle=`rgba(124,58,237,${ta*0.75})`;ctx.fillText('by Umrbektp',cx,cy+baseR*0.28);ctx.restore();}
   }
-
-  _loop() { this._tick(); this._draw(); requestAnimationFrame(() => this._loop()); }
+  _loop() { this._tick(); this._draw(); requestAnimationFrame(()=>this._loop()); }
 }
 
 // ══════════════════════════════════════════════
-//  APP
+//  APP STATE
 // ══════════════════════════════════════════════
-
 const BACKEND = 'https://safiya-ai-proxy-production.up.railway.app';
+let orb, student=null, language='EN', selectedLevel='pre-intermediate';
+let history=[], sessionMsgs=0, sessionStart=null;
 
-let orb;
-let student = null, language = 'EN', selectedLevel = 'pre-intermediate';
-let history = [], sessionMsgs = 0, sessionStart = null;
-
-// State flags — carefully managed so the listening loop never breaks
-let recognition  = null;
-let isListening  = false;   // toggle is ON
-let isProcessing = false;   // waiting for Claude response
-let isSpeaking   = false;   // TTS audio is playing
-let currentAudio = null;
-let ttsFetchCtrl = null;
+// ── The fix: one long-lived recognition object, never manually stopped ──
+// We just IGNORE results when busy (isProcessing || isSpeaking).
+let recog       = null;   // the SpeechRecognition instance
+let micOn       = false;  // toggle state
+let isProcessing= false;  // waiting for Claude
+let isSpeaking  = false;  // TTS playing
+let currentAudio= null;
+let ttsFetchCtrl= null;
 
 // Telegram
-const tg     = window.Telegram?.WebApp;
-const tgUser = tg?.initDataUnsafe?.user;
-const tgName = tgUser?.first_name
-  ? (tgUser.last_name ? `${tgUser.first_name} ${tgUser.last_name}` : tgUser.first_name)
-  : null;
-if (tg) { try { tg.ready(); tg.expand(); } catch(_) {} }
+const tg=window.Telegram?.WebApp, tgUser=tg?.initDataUnsafe?.user;
+const tgName=tgUser?.first_name?(tgUser.last_name?`${tgUser.first_name} ${tgUser.last_name}`:tgUser.first_name):null;
+if(tg){try{tg.ready();tg.expand();}catch(_){}}
 
-// DOM refs
-const $ = id => document.getElementById(id);
-const elWelcome    = $('welcome'),    elMain       = $('main');
-const elGreeting   = $('greeting'),   elNameWrap   = $('name-input-wrap');
-const elNameInput  = $('name-input'), elStartBtn   = $('start-btn');
-const elTranscript = $('transcript'), elStatus     = $('status-text');
-const elMicCheck   = $('mic-check'),  elHeaderName = $('header-name');
-const elHeaderLvl  = $('header-level'),elLangBtn   = $('lang-btn');
-const elLbBtn      = $('lb-btn'),     elLbModal    = $('lb-modal');
-const elLbClose    = $('lb-close'),   elLbList     = $('lb-list');
+const $=id=>document.getElementById(id);
+const elWelcome=$('welcome'),elMain=$('main'),elGreeting=$('greeting'),elNameWrap=$('name-input-wrap');
+const elNameInput=$('name-input'),elStartBtn=$('start-btn'),elTranscript=$('transcript');
+const elStatus=$('status-text'),elMicCheck=$('mic-check'),elHeaderName=$('header-name');
+const elHeaderLvl=$('header-level'),elLangBtn=$('lang-btn'),elLbBtn=$('lb-btn');
+const elLbModal=$('lb-modal'),elLbClose=$('lb-close'),elLbList=$('lb-list');
 
 // ── Init ──────────────────────────────────────
-
 function init() {
   orb = new Orb($('orb-canvas'));
-
-  document.querySelectorAll('.lvl-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedLevel = btn.dataset.level;
+  document.querySelectorAll('.lvl-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active'); selectedLevel=btn.dataset.level;
     });
   });
-
-  if (tgName) {
-    elGreeting.textContent = `Hey, ${tgName}!`;
-  } else {
-    elNameWrap.classList.remove('hidden');
-    elNameInput.addEventListener('input', () => {
-      elGreeting.textContent = elNameInput.value.trim() ? `Hey, ${elNameInput.value.trim()}!` : 'Hey there!';
-    });
-  }
-
-  elStartBtn.addEventListener('click', handleStart);
-
-  // Toggle: ON = start listening, OFF = stop everything
-  elMicCheck.addEventListener('change', () => {
-    if (elMicCheck.checked) {
-      startListening();
-    } else {
-      stopAll();
-    }
-  });
-
-  elLangBtn.addEventListener('click', () => {
-    language = language === 'EN' ? 'UZ' : 'EN';
-    elLangBtn.textContent = language;
-    if (recognition) recognition.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
-  });
-  elLbBtn.addEventListener('click', showLeaderboard);
-  elLbClose.addEventListener('click', () => elLbModal.classList.add('hidden'));
-  elLbModal.addEventListener('click', e => { if (e.target === elLbModal) elLbModal.classList.add('hidden'); });
-  window.addEventListener('beforeunload', logSession);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) logSession(); });
+  if(tgName){elGreeting.textContent=`Hey, ${tgName}!`;}
+  else{elNameWrap.classList.remove('hidden');elNameInput.addEventListener('input',()=>{elGreeting.textContent=elNameInput.value.trim()?`Hey, ${elNameInput.value.trim()}!`:'Hey there!';});}
+  elStartBtn.addEventListener('click',handleStart);
+  elMicCheck.addEventListener('change',()=>{ elMicCheck.checked ? micStart() : micStop(); });
+  elLangBtn.addEventListener('click',()=>{ language=language==='EN'?'UZ':'EN'; elLangBtn.textContent=language; if(recog)recog.lang=language==='EN'?'en-US':'uz-UZ'; });
+  elLbBtn.addEventListener('click',showLeaderboard);
+  elLbClose.addEventListener('click',()=>elLbModal.classList.add('hidden'));
+  elLbModal.addEventListener('click',e=>{if(e.target===elLbModal)elLbModal.classList.add('hidden');});
+  window.addEventListener('beforeunload',logSession);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)logSession();});
 }
 
 // ── Welcome ───────────────────────────────────
-
 async function handleStart() {
-  const name = tgName || elNameInput.value.trim() || 'Student';
-  selectedLevel = document.querySelector('.lvl-btn.active')?.dataset.level || 'pre-intermediate';
-  elStartBtn.disabled = true; elStartBtn.textContent = 'Starting…';
-  try { student = await apiPost('/register', { name, level: selectedLevel }); } catch(_) { student = null; }
-  sessionStart = Date.now();
+  const name=tgName||elNameInput.value.trim()||'Student';
+  selectedLevel=document.querySelector('.lvl-btn.active')?.dataset.level||'pre-intermediate';
+  elStartBtn.disabled=true; elStartBtn.textContent='Starting…';
+  try{student=await apiPost('/register',{name,level:selectedLevel});}catch(_){student=null;}
+  sessionStart=Date.now();
   elWelcome.classList.add('hidden'); elMain.classList.remove('hidden');
-  elHeaderName.textContent = name.split(' ')[0];
-  elHeaderLvl.textContent  = selectedLevel;
-  addMsg('assistant', `Hey! Let's do this. What do you want to talk about today?`);
+  elHeaderName.textContent=name.split(' ')[0]; elHeaderLvl.textContent=selectedLevel;
+  addMsg('assistant',`Hey! Let's do this. What do you want to talk about today?`);
 }
 
-// ── Mic / listening ───────────────────────────
+// ══════════════════════════════════════════════
+//  MIC — one persistent recognition session
+// ══════════════════════════════════════════════
 
-function startListening() {
+function micStart() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    alert('Speech recognition not supported. Use Chrome on Android or desktop.');
-    elMicCheck.checked = false;
-    return;
-  }
-  isListening = true;
-  // If Safiya is mid-sentence, stop her and listen
-  if (isSpeaking || isProcessing) {
-    interruptSafiya();
-    return;
-  }
+  if (!SR) { alert('Speech recognition not supported. Use Chrome on Android or desktop.'); elMicCheck.checked=false; return; }
+
+  micOn = true;
   setStatus('Listening…', 'listening');
   orb.setState('LISTENING');
-  _startRec();
-}
 
-function stopAll() {
-  isListening  = false;
-  isProcessing = false;
-  try { recognition?.stop(); } catch(_) {}
-  recognition = null;
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
-  isSpeaking = false;
-  orb.setState('IDLE');
-  setStatus('Slide to start talking', '');
-  document.getElementById('interim-live')?.remove();
-}
+  recog = new SR();
+  recog.continuous     = true;   // ← stays alive the whole session
+  recog.interimResults = true;
+  recog.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
 
-function interruptSafiya() {
-  // Stop audio / fetch
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
-  isSpeaking   = false;
-  isProcessing = false;
-  orb.setState('IDLE');
-  // Small delay then start recognition
-  setTimeout(() => {
-    if (isListening) { setStatus('Listening…', 'listening'); orb.setState('LISTENING'); _startRec(); }
-  }, 100);
-}
+  recog.onresult = evt => {
+    // While Safiya is busy, silently discard all speech
+    if (isProcessing || isSpeaking) return;
 
-function _startRec() {
-  if (!isListening) return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.continuous     = false;
-  recognition.interimResults = true;
-  recognition.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
-
-  let interimEl = null;
-
-  recognition.onresult = evt => {
     let interim = '', final = '';
     for (let i = evt.resultIndex; i < evt.results.length; i++) {
       const t = evt.results[i][0].transcript;
       if (evt.results[i].isFinal) final += t; else interim += t;
     }
+
+    // Live interim display
+    let el = document.getElementById('interim-live');
     if (interim) {
-      if (!interimEl) {
-        interimEl = document.createElement('div');
-        interimEl.id = 'interim-live'; interimEl.className = 'interim-bubble';
-        elTranscript.appendChild(interimEl);
-      }
-      interimEl.textContent = interim;
+      if (!el) { el=document.createElement('div'); el.id='interim-live'; elTranscript.appendChild(el); }
+      el.textContent = interim;
       elTranscript.scrollTop = elTranscript.scrollHeight;
+    } else if (el && !final) {
+      el.remove();
     }
+
     if (final.trim()) {
-      if (interimEl) { interimEl.remove(); interimEl = null; }
+      document.getElementById('interim-live')?.remove();
       handleSpeech(final.trim());
     }
   };
 
-  recognition.onend = () => {
-    if (interimEl) { interimEl.remove(); interimEl = null; }
-    // Only auto-restart when toggle is ON and we're not busy
-    if (isListening && !isProcessing && !isSpeaking) {
-      setTimeout(() => { if (isListening && !isProcessing && !isSpeaking) _startRec(); }, 150);
+  // Browser sometimes stops continuous recognition (timeout, network, etc.)
+  // Just restart it automatically if mic is still on
+  recog.onend = () => {
+    if (micOn) {
+      setTimeout(() => {
+        if (micOn) { try { recog.start(); } catch(_) {} }
+      }, 300);
     }
   };
 
-  recognition.onerror = evt => {
-    if (interimEl) { interimEl.remove(); interimEl = null; }
-    if ((evt.error === 'no-speech' || evt.error === 'aborted') && isListening && !isProcessing && !isSpeaking) {
-      setTimeout(() => _startRec(), 200);
+  recog.onerror = evt => {
+    if (evt.error === 'aborted') return; // we caused this
+    if (micOn) {
+      setTimeout(() => {
+        if (micOn) { try { recog.start(); } catch(_) {} }
+      }, 500);
     }
   };
 
-  try { recognition.start(); } catch(_) {}
+  try { recog.start(); } catch(_) {}
 }
 
-// ── Conversation ──────────────────────────────
+function micStop() {
+  micOn = false;
+  // Stop audio if Safiya is speaking
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
+  isSpeaking = false; isProcessing = false;
+  try { recog?.stop(); } catch(_) {}
+  recog = null;
+  document.getElementById('interim-live')?.remove();
+  orb.setState('IDLE');
+  setStatus('Slide to start talking', '');
+}
+
+// ══════════════════════════════════════════════
+//  CONVERSATION
+// ══════════════════════════════════════════════
 
 async function handleSpeech(text) {
-  if (!text || isProcessing || isSpeaking) return;
+  if (!text) return;
 
-  // ← KEY FIX: set isProcessing BEFORE stopping recognition
-  //   so recognition.onend won't try to restart
+  // Guard: don't double-process
   isProcessing = true;
-  try { recognition?.stop(); } catch(_) {}
-  recognition = null;
 
   addMsg('user', text);
   history.push({ role: 'user', content: text });
@@ -613,7 +402,6 @@ async function handleSpeech(text) {
 
   setStatus('Safiya is thinking…', 'thinking');
   orb.setState('IDLE');
-
   const typingEl = addTyping();
 
   try {
@@ -633,104 +421,59 @@ async function handleSpeech(text) {
     typingEl.remove();
     isProcessing = false;
     addMsg('system', 'Something went wrong. Try again!');
-    setStatus(isListening ? 'Listening…' : 'Slide to start talking', isListening ? 'listening' : '');
-    if (isListening) { orb.setState('LISTENING'); _startRec(); }
-    else orb.setState('IDLE');
+    if (micOn) { setStatus('Listening…','listening'); orb.setState('LISTENING'); }
+    else { setStatus('Slide to start talking',''); orb.setState('IDLE'); }
   }
 }
 
-// ── TTS ───────────────────────────────────────
-
 async function speak(text) {
   if (!text) return;
-  isSpeaking   = true;
+  isSpeaking = true;
   ttsFetchCtrl = new AbortController();
   setStatus('Safiya is speaking…', 'speaking');
   orb.setState('SPEAKING');
 
   try {
     const res = await fetch(`${BACKEND}/tts`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }), signal: ttsFetchCtrl.signal,
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text}), signal:ttsFetchCtrl.signal,
     });
     if (!res.ok) throw new Error(`TTS ${res.status}`);
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
+    const blob=await res.blob(), url=URL.createObjectURL(blob);
     currentAudio = new Audio(url);
-    await new Promise((resolve, reject) => {
-      currentAudio.onended = resolve; currentAudio.onerror = reject;
-      currentAudio.play().catch(reject);
-    });
+    await new Promise((resolve,reject)=>{currentAudio.onended=resolve;currentAudio.onerror=reject;currentAudio.play().catch(reject);});
     URL.revokeObjectURL(url);
   } catch(err) {
     if (err.name !== 'AbortError') console.error('TTS:', err);
   } finally {
-    currentAudio = null; ttsFetchCtrl = null; isSpeaking = false;
-    // After speaking, auto-resume listening if toggle is still ON
-    if (isListening) {
-      setStatus('Listening…', 'listening');
-      orb.setState('LISTENING');
-      setTimeout(() => { if (isListening && !isProcessing) _startRec(); }, 300);
-    } else {
-      orb.setState('IDLE');
-      setStatus('Slide to start talking', '');
-    }
+    currentAudio=null; ttsFetchCtrl=null; isSpeaking=false;
+    // Recognition is still running (continuous=true), just update UI
+    if (micOn) { setStatus('Listening…','listening'); orb.setState('LISTENING'); }
+    else        { setStatus('Slide to start talking',''); orb.setState('IDLE'); }
   }
 }
 
 // ── Leaderboard ───────────────────────────────
-
 async function showLeaderboard() {
-  elLbModal.classList.remove('hidden');
-  elLbList.innerHTML = '<p class="lb-empty">Loading…</p>';
+  elLbModal.classList.remove('hidden'); elLbList.innerHTML='<p class="lb-empty">Loading…</p>';
   try {
-    const data = await apiFetch('/leaderboard');
-    if (!data.length) { elLbList.innerHTML = '<p class="lb-empty">No students yet. Be the first!</p>'; return; }
-    const MEDALS = ['🥇','🥈','🥉'];
-    elLbList.innerHTML = '';
-    data.forEach((s, i) => {
-      const row = document.createElement('div'); row.className = 'lb-row';
-      row.innerHTML = `<span class="lb-rank ${i<3?'top':''}">${MEDALS[i]||i+1}</span>
-        <div class="lb-info"><p class="lb-name">${esc(s.name)}</p><p class="lb-level">${esc(s.level)}</p></div>
-        <div class="lb-stats"><p class="lb-msgs">${s.messages_sent??0} msgs</p><p class="lb-mins">${Math.round(s.minutes_spent??0)} min</p></div>`;
-      elLbList.appendChild(row);
-    });
-  } catch(_) { elLbList.innerHTML = '<p class="lb-empty">Could not load leaderboard.</p>'; }
+    const data=await apiFetch('/leaderboard');
+    if(!data.length){elLbList.innerHTML='<p class="lb-empty">No students yet. Be the first!</p>';return;}
+    const MEDALS=['🥇','🥈','🥉']; elLbList.innerHTML='';
+    data.forEach((s,i)=>{const row=document.createElement('div');row.className='lb-row';
+      row.innerHTML=`<span class="lb-rank ${i<3?'top':''}">${MEDALS[i]||i+1}</span><div class="lb-info"><p class="lb-name">${esc(s.name)}</p><p class="lb-level">${esc(s.level)}</p></div><div class="lb-stats"><p class="lb-msgs">${s.messages_sent??0} msgs</p><p class="lb-mins">${Math.round(s.minutes_spent??0)} min</p></div>`;
+      elLbList.appendChild(row);});
+  } catch(_){elLbList.innerHTML='<p class="lb-empty">Could not load leaderboard.</p>';}
 }
 
 // ── Helpers ───────────────────────────────────
-
-function addMsg(role, text) {
-  const wrap = document.createElement('div'); wrap.className = `msg ${role}`;
-  if (role === 'assistant') { const l = document.createElement('p'); l.className='msg-label'; l.textContent='SAFIYA'; wrap.appendChild(l); }
-  const b = document.createElement('div'); b.className='msg-bubble'; b.textContent=text; wrap.appendChild(b);
-  elTranscript.appendChild(wrap);
-  requestAnimationFrame(() => elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' }));
-  return wrap;
-}
-function addTyping() {
-  const wrap = document.createElement('div'); wrap.className='msg assistant';
-  const l = document.createElement('p'); l.className='msg-label'; l.textContent='SAFIYA'; wrap.appendChild(l);
-  const b = document.createElement('div'); b.className='msg-bubble';
-  b.innerHTML='<span class="typing-dots"><span></span><span></span><span></span></span>'; wrap.appendChild(b);
-  elTranscript.appendChild(wrap); elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' });
-  return wrap;
-}
-function setStatus(text, cls='') { elStatus.textContent=text; elStatus.className=cls; }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-async function apiPost(path, body) {
-  const res = await fetch(`${BACKEND}${path}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error||`HTTP ${res.status}`); }
-  return res.json();
-}
-async function apiFetch(path) {
-  const res = await fetch(`${BACKEND}${path}`); if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json();
-}
-async function logSession() {
-  if (!student?.id || !sessionStart) return;
-  const mins = (Date.now()-sessionStart)/60000;
-  try { await apiPost('/log',{studentId:student.id,messages:sessionMsgs,minutes:Math.round(mins*10)/10}); } catch(_){}
-}
+function addMsg(role,text){const w=document.createElement('div');w.className=`msg ${role}`;if(role==='assistant'){const l=document.createElement('p');l.className='msg-label';l.textContent='SAFIYA';w.appendChild(l);}const b=document.createElement('div');b.className='msg-bubble';b.textContent=text;w.appendChild(b);elTranscript.appendChild(w);requestAnimationFrame(()=>elTranscript.scrollTo({top:elTranscript.scrollHeight,behavior:'smooth'}));return w;}
+function addTyping(){const w=document.createElement('div');w.className='msg assistant';const l=document.createElement('p');l.className='msg-label';l.textContent='SAFIYA';w.appendChild(l);const b=document.createElement('div');b.className='msg-bubble';b.innerHTML='<span class="typing-dots"><span></span><span></span><span></span></span>';w.appendChild(b);elTranscript.appendChild(w);elTranscript.scrollTo({top:elTranscript.scrollHeight,behavior:'smooth'});return w;}
+function setStatus(t,c=''){elStatus.textContent=t;elStatus.className=c;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function apiPost(path,body){const res=await fetch(`${BACKEND}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||`HTTP ${res.status}`);}return res.json();}
+async function apiFetch(path){const res=await fetch(`${BACKEND}${path}`);if(!res.ok)throw new Error(`HTTP ${res.status}`);return res.json();}
+async function logSession(){if(!student?.id||!sessionStart)return;const mins=(Date.now()-sessionStart)/60000;try{await apiPost('/log',{studentId:student.id,messages:sessionMsgs,minutes:Math.round(mins*10)/10});}catch(_){}}
 
 init();
 </script>
