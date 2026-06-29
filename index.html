@@ -6,7 +6,6 @@
   <title>Safiya AI</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* ── Reset ─────────────────────────────────────────── */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; overflow: hidden; }
     body {
@@ -15,193 +14,93 @@
       color: #1e1b4b;
     }
 
-    /* ── Canvas (orb background) ───────────────────────── */
     #orb-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
     }
 
-    /* ── App shell ─────────────────────────────────────── */
     #app {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
+      position: fixed; inset: 0; z-index: 1;
+      display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* ── Utility ───────────────────────────────────────── */
     .hidden { display: none !important; }
 
-    /* ── Welcome screen ────────────────────────────────── */
+    /* ── Welcome ── */
     #welcome {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 20px;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px 20px;
     }
-
     .welcome-card {
       background: rgba(255,255,255,0.78);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border: 1px solid rgba(255,255,255,0.92);
-      border-radius: 28px;
-      padding: 36px 28px 28px;
-      width: 100%;
-      max-width: 390px;
-      box-shadow: 0 12px 40px rgba(124,58,237,0.13), 0 2px 8px rgba(0,0,0,0.04);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255,255,255,0.92); border-radius: 28px;
+      padding: 36px 28px 28px; width: 100%; max-width: 390px;
+      box-shadow: 0 12px 40px rgba(124,58,237,0.13);
     }
-
-    .app-logo {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #7c3aed;
-      margin-bottom: 20px;
-    }
-
-    #greeting {
-      font-size: 26px;
-      font-weight: 700;
-      color: #1e1b4b;
-      line-height: 1.2;
-      margin-bottom: 6px;
-    }
-
-    .welcome-sub {
-      font-size: 14px;
-      color: #6b7280;
-      margin-bottom: 22px;
-    }
-
-    /* Name input (shown when not in Telegram) */
+    .app-logo { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c3aed; margin-bottom: 20px; }
+    #greeting { font-size: 26px; font-weight: 700; color: #1e1b4b; line-height: 1.2; margin-bottom: 6px; }
+    .welcome-sub { font-size: 14px; color: #6b7280; margin-bottom: 22px; }
     #name-input-wrap { margin-bottom: 18px; }
     #name-input {
-      width: 100%;
-      padding: 13px 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 14px;
-      font-size: 16px;
-      font-family: inherit;
-      color: #1e1b4b;
-      background: rgba(255,255,255,0.9);
-      outline: none;
-      transition: border-color 0.2s;
+      width: 100%; padding: 13px 16px; border: 2px solid #e5e7eb; border-radius: 14px;
+      font-size: 16px; font-family: inherit; color: #1e1b4b;
+      background: rgba(255,255,255,0.9); outline: none; transition: border-color 0.2s;
     }
     #name-input:focus { border-color: #7c3aed; }
     #name-input::placeholder { color: #9ca3af; }
 
-    /* Level picker */
-    .level-label {
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #9ca3af;
-      margin-bottom: 10px;
-    }
-    .level-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
+    .level-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 10px; }
+    .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
     .lvl-btn {
-      padding: 11px 12px;
-      border: 2px solid #e5e7eb;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.7);
-      font-size: 13px;
-      font-weight: 500;
-      color: #6b7280;
-      cursor: pointer;
-      transition: all 0.18s;
-      text-align: left;
-      line-height: 1.4;
-      touch-action: manipulation;
+      padding: 11px 12px; border: 2px solid #e5e7eb; border-radius: 14px;
+      background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500;
+      color: #6b7280; cursor: pointer; transition: all 0.18s;
+      text-align: left; line-height: 1.4; touch-action: manipulation;
     }
     .lvl-btn strong { display: block; font-size: 14px; color: #374151; }
-    .lvl-btn.active {
-      border-color: #7c3aed;
-      background: rgba(124,58,237,0.07);
-      color: #7c3aed;
-    }
+    .lvl-btn.active { border-color: #7c3aed; background: rgba(124,58,237,0.07); color: #7c3aed; }
     .lvl-btn.active strong { color: #7c3aed; }
-
-    /* Start button */
     #start-btn {
-      width: 100%;
-      padding: 16px;
+      width: 100%; padding: 16px;
       background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-      color: white;
-      border: none;
-      border-radius: 18px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      touch-action: manipulation;
+      color: white; border: none; border-radius: 18px; font-size: 16px;
+      font-weight: 700; cursor: pointer; touch-action: manipulation;
       transition: opacity 0.2s, transform 0.1s;
       box-shadow: 0 4px 20px rgba(124,58,237,0.35);
     }
     #start-btn:active { opacity: 0.85; transform: scale(0.98); }
     #start-btn:disabled { opacity: 0.6; }
 
-    /* ── Main screen ───────────────────────────────────── */
+    /* ── Main ── */
     #main { flex: 1; display: flex; flex-direction: column; }
 
-    /* Header */
     #header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 14px 18px;
       background: rgba(255,255,255,0.55);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.6);
-      flex-shrink: 0;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.6); flex-shrink: 0;
     }
     .header-left { display: flex; flex-direction: column; }
     .header-title { font-size: 16px; font-weight: 700; color: #1e1b4b; }
     .header-sub { font-size: 12px; color: #7c3aed; font-weight: 500; text-transform: capitalize; }
     .header-actions { display: flex; gap: 8px; align-items: center; }
-
     .icon-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border: 1.5px solid rgba(124,58,237,0.25);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.7);
-      color: #7c3aed;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      touch-action: manipulation;
-      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border: 1.5px solid rgba(124,58,237,0.25);
+      border-radius: 10px; background: rgba(255,255,255,0.7);
+      color: #7c3aed; font-size: 14px; font-weight: 700;
+      cursor: pointer; touch-action: manipulation; transition: background 0.15s;
     }
     #lang-btn { font-size: 12px; letter-spacing: 0.04em; width: 42px; }
 
-    /* Transcript */
+    /* ── Transcript ── */
     #transcript {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 16px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex: 1; overflow-y: auto; padding: 16px 16px 8px;
+      display: flex; flex-direction: column; gap: 12px;
       -webkit-overflow-scrolling: touch;
     }
     #transcript::-webkit-scrollbar { display: none; }
@@ -210,175 +109,95 @@
     .msg.user      { align-self: flex-end;   align-items: flex-end;   }
     .msg.assistant { align-self: flex-start; align-items: flex-start; }
     .msg.system    { align-self: center; max-width: 95%; }
-
-    .msg-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #9ca3af;
-      margin-bottom: 3px;
-      letter-spacing: 0.04em;
-    }
-    .msg-bubble {
-      padding: 12px 16px;
-      border-radius: 20px;
-      font-size: 15px;
-      line-height: 1.55;
-    }
+    .msg-label { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 3px; letter-spacing: 0.04em; }
+    .msg-bubble { padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.55; }
     .msg.user .msg-bubble {
       background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-      color: white;
-      border-bottom-right-radius: 5px;
+      color: white; border-bottom-right-radius: 5px;
     }
     .msg.assistant .msg-bubble {
-      background: rgba(255,255,255,0.82);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.9);
-      color: #1e1b4b;
-      border-bottom-left-radius: 5px;
+      background: rgba(255,255,255,0.82); backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.9);
+      color: #1e1b4b; border-bottom-left-radius: 5px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
     .msg.system .msg-bubble {
-      background: rgba(239,235,255,0.7);
-      color: #7c3aed;
-      font-size: 13px;
-      border-radius: 12px;
-      text-align: center;
+      background: rgba(239,235,255,0.7); color: #7c3aed;
+      font-size: 13px; border-radius: 12px; text-align: center;
     }
-
-    /* Interim bubble (live speech) */
     .interim-bubble {
-      align-self: flex-end;
-      padding: 10px 14px;
+      align-self: flex-end; padding: 10px 14px;
       background: rgba(124,58,237,0.09);
-      border: 1.5px dashed #c4b5fd;
-      border-radius: 18px;
-      border-bottom-right-radius: 5px;
-      font-size: 14px;
-      color: #7c3aed;
-      max-width: 82%;
-      font-style: italic;
+      border: 1.5px dashed #c4b5fd; border-radius: 18px;
+      border-bottom-right-radius: 5px; font-size: 14px;
+      color: #7c3aed; max-width: 82%; font-style: italic;
     }
 
-    /* Controls */
+    /* ── Controls ── */
     #controls {
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 20px 20px;
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; padding: 16px 20px 24px;
       background: rgba(255,255,255,0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.6);
-      gap: 10px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.6); gap: 12px;
     }
 
     #status-text {
-      font-size: 13px;
-      font-weight: 500;
-      color: #9ca3af;
-      text-align: center;
-      min-height: 18px;
+      font-size: 13px; font-weight: 500; color: #9ca3af;
+      text-align: center; min-height: 18px; transition: color 0.3s;
     }
     #status-text.listening { color: #7c3aed; }
     #status-text.thinking  { color: #2563eb; }
     #status-text.speaking  { color: #059669; }
 
-    /* Mic toggle */
-    .mic-toggle-wrap { display: flex; align-items: center; gap: 14px; }
-    .mic-toggle-label { font-size: 13px; color: #9ca3af; font-weight: 500; }
-
-    .mic-switch {
-      position: relative;
-      width: 88px;
-      height: 46px;
-      cursor: pointer;
-      display: block;
-    }
-    .mic-switch input {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      cursor: pointer;
-      z-index: 3;
-    }
-    .mic-track {
-      position: absolute;
-      inset: 0;
-      border-radius: 23px;
-      background: #e5e7eb;
-      transition: background 0.3s ease;
-    }
-    .mic-switch input:checked ~ .mic-track {
+    /* Push-to-talk button */
+    #ptt-btn {
+      width: 76px; height: 76px; border-radius: 50%;
       background: linear-gradient(135deg, #7c3aed, #2563eb);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: none; user-select: none;
+      box-shadow: 0 4px 24px rgba(124,58,237,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
     }
-    .mic-thumb {
-      position: absolute;
-      top: 5px; left: 5px;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #9ca3af;
+    #ptt-btn.active {
+      transform: scale(1.12);
+      box-shadow: 0 4px 40px rgba(124,58,237,0.75);
     }
-    .mic-switch input:checked ~ .mic-thumb {
-      transform: translateX(42px);
-      color: #7c3aed;
+    #ptt-btn.speaking-interrupt {
+      background: linear-gradient(135deg, #059669, #0284c7);
+      box-shadow: 0 4px 24px rgba(5,150,105,0.5);
     }
-    @keyframes mic-pulse {
-      0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 0 rgba(124,58,237,0.4); }
-      50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 0 0 8px rgba(124,58,237,0); }
+    #ptt-hint {
+      font-size: 12px; color: #9ca3af; font-weight: 500; letter-spacing: 0.02em;
     }
-    .mic-switch input:checked ~ .mic-thumb { animation: mic-pulse 1.8s infinite; }
 
-    /* ── Leaderboard modal ─────────────────────────────── */
+    @keyframes ptt-pulse {
+      0%, 100% { box-shadow: 0 4px 40px rgba(124,58,237,0.75), 0 0 0 0 rgba(124,58,237,0.5); }
+      50%       { box-shadow: 0 4px 40px rgba(124,58,237,0.75), 0 0 0 14px rgba(124,58,237,0); }
+    }
+    #ptt-btn.active { animation: ptt-pulse 1s infinite; }
+
+    /* ── Leaderboard ── */
     #lb-modal {
       position: fixed; inset: 0; z-index: 10;
       display: flex; align-items: flex-end;
       background: rgba(30,27,75,0.4);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
     .lb-sheet {
-      background: rgba(255,255,255,0.96);
-      border-radius: 28px 28px 0 0;
-      padding-bottom: env(safe-area-inset-bottom);
-      width: 100%;
-      max-height: 70vh;
-      display: flex;
-      flex-direction: column;
+      background: rgba(255,255,255,0.96); border-radius: 28px 28px 0 0;
+      padding-bottom: env(safe-area-inset-bottom); width: 100%; max-height: 70vh;
+      display: flex; flex-direction: column;
       box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
     }
     .lb-handle { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 12px auto 0; }
-    .lb-header {
-      padding: 16px 20px 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid #f3f4f6;
-      flex-shrink: 0;
-    }
+    .lb-header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
     .lb-title { font-size: 17px; font-weight: 700; color: #1e1b4b; }
-    .lb-close {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: #f3f4f6; border: none;
-      color: #6b7280; font-size: 18px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .lb-close { width: 30px; height: 30px; border-radius: 50%; background: #f3f4f6; border: none; color: #6b7280; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .lb-list { overflow-y: auto; padding: 8px 16px 16px; }
     .lb-list::-webkit-scrollbar { display: none; }
-    .lb-row {
-      display: flex; align-items: center;
-      padding: 12px 4px;
-      border-bottom: 1px solid #f9fafb;
-      gap: 12px;
-    }
+    .lb-row { display: flex; align-items: center; padding: 12px 4px; border-bottom: 1px solid #f9fafb; gap: 12px; }
     .lb-rank { font-size: 15px; font-weight: 700; color: #9ca3af; min-width: 28px; text-align: center; }
     .lb-rank.top { color: #f59e0b; }
     .lb-info { flex: 1; }
@@ -390,14 +209,7 @@
     .lb-empty { text-align: center; padding: 32px; color: #9ca3af; font-size: 14px; }
 
     /* Typing dots */
-    .typing-dots span {
-      display: inline-block;
-      width: 6px; height: 6px;
-      background: #7c3aed;
-      border-radius: 50%;
-      margin: 0 2px;
-      animation: dot-bounce 1.2s infinite ease-in-out;
-    }
+    .typing-dots span { display: inline-block; width: 6px; height: 6px; background: #7c3aed; border-radius: 50%; margin: 0 2px; animation: dot-bounce 1.2s infinite ease-in-out; }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes dot-bounce {
@@ -412,18 +224,16 @@
 
 <div id="app">
 
-  <!-- ══════════════ WELCOME SCREEN ══════════════ -->
+  <!-- WELCOME -->
   <div id="welcome">
     <div class="welcome-card">
       <p class="app-logo">Safiya AI</p>
-
       <div id="name-input-wrap" class="hidden">
         <input type="text" id="name-input" placeholder="What's your name?" maxlength="30"
                autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
       <h1 id="greeting">Hey there!</h1>
       <p class="welcome-sub">Pick your English level to start.</p>
-
       <p class="level-label">Your level</p>
       <div class="level-grid">
         <button class="lvl-btn" data-level="beginner"><strong>Beginner</strong>A1 – just starting</button>
@@ -432,12 +242,11 @@
         <button class="lvl-btn" data-level="intermediate"><strong>Intermediate</strong>B2 – pretty solid</button>
         <button class="lvl-btn" data-level="advanced" style="grid-column:1/-1"><strong>Advanced</strong>C1 – let's get nerdy</button>
       </div>
-
       <button id="start-btn">Start Practice</button>
     </div>
   </div>
 
-  <!-- ══════════════ MAIN SCREEN ══════════════ -->
+  <!-- MAIN -->
   <div id="main" class="hidden">
     <div id="header">
       <div class="header-left">
@@ -453,25 +262,18 @@
     <div id="transcript"></div>
 
     <div id="controls">
-      <p id="status-text">Slide the mic to start talking</p>
-      <div class="mic-toggle-wrap">
-        <span class="mic-toggle-label">Off</span>
-        <label class="mic-switch">
-          <input type="checkbox" id="mic-check">
-          <div class="mic-track"></div>
-          <div class="mic-thumb">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.07A8.001 8.001 0 0 0 20 11a1 1 0 1 0-2 0 6 6 0 0 1-12 0 1 1 0 1 0-2 0 8.001 8.001 0 0 0 7 7.93z"/>
-            </svg>
-          </div>
-        </label>
-        <span class="mic-toggle-label">Talk</span>
+      <p id="status-text">Hold the button to speak</p>
+      <div id="ptt-btn">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.07A8.001 8.001 0 0 0 20 11a1 1 0 1 0-2 0 6 6 0 0 1-12 0 1 1 0 1 0-2 0 8.001 8.001 0 0 0 7 7.93z"/>
+        </svg>
       </div>
+      <p id="ptt-hint">Hold to talk · Tap to interrupt</p>
     </div>
   </div>
 </div>
 
-<!-- ══════════════ LEADERBOARD MODAL ══════════════ -->
+<!-- LEADERBOARD -->
 <div id="lb-modal" class="hidden">
   <div class="lb-sheet">
     <div class="lb-handle"></div>
@@ -486,9 +288,9 @@
 <script>
 'use strict';
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 //  ORB CANVAS
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 
 class Orb {
   constructor(canvas) {
@@ -497,7 +299,7 @@ class Orb {
     this.nodes  = [];
     this.rings  = [];
     this.state  = 'IDLE';
-    this.burst  = 0;
+    this.burst  = 0;     // 0 = contained, 1 = fully exploded
     this.frame  = 0;
 
     window.addEventListener('resize', () => this._resize());
@@ -512,17 +314,22 @@ class Orb {
     this.cx = this.canvas.width  / 2;
     this.cy = this.canvas.height * 0.36;
     const m = Math.min(this.canvas.width, this.canvas.height);
-    this.baseR  = m * 0.21;
-    this.burstR = m * 0.54;
-    this.connD  = this.baseR * 0.68;
+    this.baseR  = m * 0.20;
+    this.burstR = m * 0.72;   // nodes spread to 72% of screen — well outside the circle
+    this.connD  = this.baseR * 0.70;
   }
 
-  _mkNodes(N = 58) {
+  _mkNodes(N = 65) {
     this.nodes = [];
     for (let i = 0; i < N; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = Math.random() * this.baseR;
-      this.nodes.push({ x: Math.cos(a)*r, y: Math.sin(a)*r, vx:0, vy:0, angle:a, baseR:r, size: 1 + Math.random()*1.6 });
+      this.nodes.push({
+        x: Math.cos(a) * r, y: Math.sin(a) * r,
+        vx: 0, vy: 0,
+        angle: a, baseR: r,
+        size: 1 + Math.random() * 1.8,
+      });
     }
   }
 
@@ -533,28 +340,34 @@ class Orb {
   _tick() {
     this.frame++;
 
-    // Burst progress
-    if (this.state === 'SPEAKING') this.burst = Math.min(1, this.burst + 0.055);
-    else                           this.burst = Math.max(0, this.burst - 0.014);
+    // Burst: explode fast, contract slowly
+    if (this.state === 'SPEAKING') {
+      this.burst = Math.min(1, this.burst + 0.07);   // ~0.8s to full burst
+    } else {
+      this.burst = Math.max(0, this.burst - 0.012);  // ~4s to contract
+    }
 
-    // Pulse rings while speaking
-    if (this.state === 'SPEAKING' && this.frame % 22 === 0)
-      this.rings.push({ r: this.baseR * 0.4, a: 0.55 });
-    this.rings.forEach(r => { r.r += 4.5; r.a -= 0.013; });
+    // Spawn pulse rings while speaking
+    if (this.state === 'SPEAKING' && this.frame % 18 === 0)
+      this.rings.push({ r: this.baseR * 0.5, a: 0.6 });
+    this.rings.forEach(r => { r.r += 5; r.a -= 0.011; });
     this.rings = this.rings.filter(r => r.a > 0);
 
-    const env = this.baseR + (this.burstR - this.baseR) * this._ease(this.burst);
-    const jitter = this.state === 'LISTENING' ? 0.22
-                 : this.state === 'SPEAKING'  ? 0.38 : 0.04;
+    const envelope = this.baseR + (this.burstR - this.baseR) * this._ease(this.burst);
+
+    const jitter = this.state === 'LISTENING' ? 0.28
+                 : this.state === 'SPEAKING'  ? 0.45 : 0.04;
 
     this.nodes.forEach(n => {
-      n.vx += (Math.random()-.5) * jitter;
-      n.vy += (Math.random()-.5) * jitter;
-      const tr = n.baseR / this.baseR * env;
-      n.vx += (Math.cos(n.angle)*tr - n.x) * 0.045;
-      n.vy += (Math.sin(n.angle)*tr - n.y) * 0.045;
-      n.vx *= 0.87; n.vy *= 0.87;
-      n.x += n.vx;  n.y += n.vy;
+      n.vx += (Math.random() - 0.5) * jitter;
+      n.vy += (Math.random() - 0.5) * jitter;
+
+      const tr = n.baseR / this.baseR * envelope;
+      n.vx += (Math.cos(n.angle) * tr - n.x) * 0.05;
+      n.vy += (Math.sin(n.angle) * tr - n.y) * 0.05;
+
+      n.vx *= 0.86; n.vy *= 0.86;
+      n.x  += n.vx; n.y  += n.vy;
     });
   }
 
@@ -562,46 +375,52 @@ class Orb {
     const { ctx, cx, cy, burst, baseR, burstR, connD, frame } = this;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const glowR = baseR + (burstR - baseR) * burst * 0.75;
+    const glowR = baseR + (burstR - baseR) * burst * 0.8;
 
     // Ambient glow
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 1.4);
-    g.addColorStop(0,   `rgba(124,58,237,${0.07 + burst*0.07})`);
-    g.addColorStop(0.5, `rgba(99,102,241,${0.04 + burst*0.04})`);
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 1.3);
+    g.addColorStop(0,   `rgba(124,58,237,${0.08 + burst * 0.1})`);
+    g.addColorStop(0.5, `rgba(99,102,241,${0.05 + burst * 0.06})`);
     g.addColorStop(1,   'rgba(37,99,235,0)');
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(cx, cy, glowR*1.6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, glowR * 1.5, 0, Math.PI * 2); ctx.fill();
 
-    // Dashed circle (idle)
-    if (burst < 0.6) {
+    // Circle boundary (fades as burst grows)
+    if (burst < 0.7) {
       ctx.save();
       ctx.setLineDash([5, 10]);
-      ctx.strokeStyle = `rgba(167,139,250,${(0.6-burst)*0.4})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI*2); ctx.stroke();
+      ctx.strokeStyle = `rgba(167,139,250,${(0.7 - burst) * 0.45})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, baseR, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
 
-    // Pulse rings
+    // Pulse rings (neurolink shockwave)
     this.rings.forEach(r => {
-      ctx.beginPath(); ctx.arc(cx, cy, r.r, 0, Math.PI*2);
+      ctx.beginPath(); ctx.arc(cx, cy, r.r, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(124,58,237,${r.a})`;
       ctx.lineWidth = 1.5; ctx.stroke();
     });
 
-    // Connections (web)
-    const dyn = connD * (1 + burst * 0.9);
+    // Node connections — dynamically widen during burst so web spreads visibly
+    const dynConn = connD * (1 + burst * 1.4);
+    const lineAlphaBoost = burst * 0.3;
     for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i+1; j < this.nodes.length; j++) {
+      for (let j = i + 1; j < this.nodes.length; j++) {
         const a = this.nodes[i], b = this.nodes[j];
-        const dx = a.x-b.x, dy = a.y-b.y;
-        const d = Math.sqrt(dx*dx+dy*dy);
-        if (d < dyn) {
-          ctx.strokeStyle = `rgba(124,58,237,${(1-d/dyn)*(0.28+burst*0.22)})`;
-          ctx.lineWidth = 0.6;
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < dynConn) {
+          const alpha = (1 - d / dynConn) * (0.25 + lineAlphaBoost);
+          // Shift line colour toward electric blue during burst
+          const r = Math.round(124 - burst * 50);
+          const gv = Math.round(58  + burst * 80);
+          const bv = Math.round(237);
+          ctx.strokeStyle = `rgba(${r},${gv},${bv},${alpha})`;
+          ctx.lineWidth = 0.6 + burst * 0.4;
           ctx.beginPath();
-          ctx.moveTo(cx+a.x, cy+a.y);
-          ctx.lineTo(cx+b.x, cy+b.y);
+          ctx.moveTo(cx + a.x, cy + a.y);
+          ctx.lineTo(cx + b.x, cy + b.y);
           ctx.stroke();
         }
       }
@@ -609,64 +428,104 @@ class Orb {
 
     // Nodes
     this.nodes.forEach(n => {
-      const nx = cx+n.x, ny = cy+n.y, s = n.size*(1+burst*0.6);
-      const ng = ctx.createRadialGradient(nx,ny,0, nx,ny,s*5);
-      ng.addColorStop(0, `rgba(124,58,237,${0.55+burst*0.3})`);
+      const nx = cx + n.x, ny = cy + n.y;
+      const s  = n.size * (1 + burst * 0.8);
+
+      const ng = ctx.createRadialGradient(nx, ny, 0, nx, ny, s * 5);
+      ng.addColorStop(0, `rgba(124,58,237,${0.6 + burst * 0.35})`);
       ng.addColorStop(1, 'rgba(124,58,237,0)');
       ctx.fillStyle = ng;
-      ctx.beginPath(); ctx.arc(nx, ny, s*5, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'rgba(100,40,220,0.9)';
-      ctx.beginPath(); ctx.arc(nx, ny, s, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(nx, ny, s * 5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = `rgba(${Math.round(90 - burst*30)},${Math.round(35 + burst*40)},220,0.9)`;
+      ctx.beginPath(); ctx.arc(nx, ny, s, 0, Math.PI * 2); ctx.fill();
     });
 
-    // Listening ripple
+    // Listening ripple ring
     if (this.state === 'LISTENING') {
-      const rr = baseR*0.95 + Math.sin(frame*0.12)*baseR*0.06;
-      ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2);
-      ctx.strokeStyle = `rgba(124,58,237,${0.18+Math.sin(frame*0.12)*0.08})`;
-      ctx.lineWidth = 2; ctx.stroke();
+      const rr = baseR * 0.96 + Math.sin(frame * 0.14) * baseR * 0.06;
+      ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(124,58,237,${0.20 + Math.sin(frame * 0.14) * 0.09})`;
+      ctx.lineWidth = 2.5; ctx.stroke();
+    }
+
+    // Centre text — "Safiya AI" + "by Umrbektp"
+    // Fades out as nodes burst (so text doesn't clash with spread web)
+    const textAlpha = Math.max(0, 1 - burst * 2.2);
+    if (textAlpha > 0) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Soft shadow so text stays readable over nodes
+      ctx.shadowColor = 'rgba(255,255,255,0.9)';
+      ctx.shadowBlur  = 12;
+
+      ctx.font = `bold ${Math.round(baseR * 0.48)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+      ctx.fillStyle = `rgba(30,27,75,${textAlpha * 0.85})`;
+      ctx.fillText('Safiya AI', cx, cy - baseR * 0.09);
+
+      ctx.shadowBlur = 8;
+      ctx.font = `${Math.round(baseR * 0.21)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+      ctx.fillStyle = `rgba(124,58,237,${textAlpha * 0.75})`;
+      ctx.fillText('by Umrbektp', cx, cy + baseR * 0.28);
+
+      ctx.restore();
     }
   }
 
-  _loop() { this._tick(); this._draw(); requestAnimationFrame(() => this._loop()); }
+  _loop() {
+    this._tick();
+    this._draw();
+    requestAnimationFrame(() => this._loop());
+  }
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 //  APP
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 
 const BACKEND = 'https://safiya-ai-proxy-production.up.railway.app';
 
-let orb, student = null, language = 'EN', selectedLevel = 'pre-intermediate';
+let orb;
+let student = null, language = 'EN', selectedLevel = 'pre-intermediate';
 let history = [], sessionMsgs = 0, sessionStart = null;
-let recognition = null, isListening = false, isSpeaking = false;
+
+// Speech / audio state
+let recognition   = null;
+let isListening   = false;
+let isSpeaking    = false;
+let isProcessing  = false;          // true while waiting for Claude/TTS
+let currentAudio  = null;           // reference to playing Audio object
+let ttsFetchCtrl  = null;           // AbortController for TTS fetch
+let pttTranscript = '';
+let pttActive     = false;          // pointer currently held down
 
 // Telegram
-const tg       = window.Telegram?.WebApp;
-const tgUser   = tg?.initDataUnsafe?.user;
-const tgName   = tgUser?.first_name
+const tg     = window.Telegram?.WebApp;
+const tgUser = tg?.initDataUnsafe?.user;
+const tgName = tgUser?.first_name
   ? (tgUser.last_name ? `${tgUser.first_name} ${tgUser.last_name}` : tgUser.first_name)
   : null;
-
 if (tg) { try { tg.ready(); tg.expand(); } catch(_) {} }
 
 // DOM
-const $  = id => document.getElementById(id);
-const elWelcome    = $('welcome'),    elMain       = $('main');
-const elGreeting   = $('greeting'),   elNameWrap   = $('name-input-wrap');
-const elNameInput  = $('name-input'), elStartBtn   = $('start-btn');
-const elTranscript = $('transcript'), elStatus     = $('status-text');
-const elMicCheck   = $('mic-check'),  elHeaderName = $('header-name');
-const elHeaderLvl  = $('header-level'), elLangBtn  = $('lang-btn');
-const elLbBtn      = $('lb-btn'),     elLbModal    = $('lb-modal');
-const elLbClose    = $('lb-close'),   elLbList     = $('lb-list');
+const $ = id => document.getElementById(id);
+const elWelcome    = $('welcome'),   elMain      = $('main');
+const elGreeting   = $('greeting'),  elNameWrap  = $('name-input-wrap');
+const elNameInput  = $('name-input'),elStartBtn  = $('start-btn');
+const elTranscript = $('transcript'),elStatus    = $('status-text');
+const elHeaderName = $('header-name'),elHeaderLvl= $('header-level');
+const elLangBtn    = $('lang-btn'),  elLbBtn     = $('lb-btn');
+const elLbModal    = $('lb-modal'),  elLbClose   = $('lb-close');
+const elLbList     = $('lb-list'),   elPttBtn    = $('ptt-btn');
+const elPttHint    = $('ptt-hint');
 
-// ── Init ──────────────────────────────────────────────
+// ── Init ─────────────────────────────────────
 
 function init() {
   orb = new Orb($('orb-canvas'));
 
-  // Level buttons
   document.querySelectorAll('.lvl-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
@@ -675,7 +534,6 @@ function init() {
     });
   });
 
-  // Name
   if (tgName) {
     elGreeting.textContent = `Hey, ${tgName}!`;
   } else {
@@ -686,7 +544,13 @@ function init() {
   }
 
   elStartBtn.addEventListener('click', handleStart);
-  elMicCheck.addEventListener('change', () => elMicCheck.checked ? startListening() : stopListening());
+
+  // Push-to-talk: pointer events so it works on both touch and mouse
+  elPttBtn.addEventListener('pointerdown', onPttDown);
+  elPttBtn.addEventListener('pointerup',   onPttUp);
+  elPttBtn.addEventListener('pointerleave', e => { if (pttActive) onPttUp(e); });
+  elPttBtn.addEventListener('contextmenu', e => e.preventDefault());
+
   elLangBtn.addEventListener('click', () => {
     language = language === 'EN' ? 'UZ' : 'EN';
     elLangBtn.textContent = language;
@@ -700,7 +564,7 @@ function init() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) logSession(); });
 }
 
-// ── Welcome ───────────────────────────────────────────
+// ── Welcome ───────────────────────────────────
 
 async function handleStart() {
   const name = tgName || elNameInput.value.trim() || 'Student';
@@ -719,78 +583,136 @@ async function handleStart() {
   addMsg('assistant', `Hey! Let's do this. What do you want to talk about today?`);
 }
 
-// ── Speech recognition ────────────────────────────────
+// ── Push-to-talk ──────────────────────────────
 
-function startListening() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    alert('Speech recognition not supported. Try Chrome on Android or desktop.');
-    elMicCheck.checked = false;
+function onPttDown(e) {
+  e.preventDefault();
+  elPttBtn.setPointerCapture(e.pointerId);
+  pttActive = true;
+
+  if (isSpeaking || isProcessing) {
+    // Interrupt Safiya — stop audio immediately, then start listening
+    interruptSafiya();
     return;
   }
-  if (isSpeaking) return;
-  isListening = true;
-  setStatus('Listening…', 'listening');
-  orb.setState('LISTENING');
-  _startRec();
+
+  startPTT();
 }
 
-function _startRec() {
+function onPttUp(e) {
+  if (!pttActive) return;
+  pttActive = false;
+  elPttBtn.classList.remove('active');
+
+  if (isListening) {
+    stopPTTAndSend();
+  }
+}
+
+function startPTT() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Speech recognition not supported. Use Chrome on Android or desktop.');
+    return;
+  }
+
+  pttTranscript = '';
+  isListening   = true;
+  elPttBtn.classList.add('active');
+  elPttBtn.classList.remove('speaking-interrupt');
+  setStatus('Listening…', 'listening');
+  orb.setState('LISTENING');
+
   recognition = new SR();
-  recognition.continuous     = false;
+  recognition.continuous     = true;
   recognition.interimResults = true;
   recognition.lang = language === 'EN' ? 'en-US' : 'uz-UZ';
 
-  let interimEl = null;
-
   recognition.onresult = evt => {
-    let interim = '', final = '';
+    let interim = '', finalChunk = '';
     for (let i = evt.resultIndex; i < evt.results.length; i++) {
       const t = evt.results[i][0].transcript;
-      if (evt.results[i].isFinal) final += t; else interim += t;
+      if (evt.results[i].isFinal) finalChunk += t;
+      else interim += t;
     }
-    if (interim) {
-      if (!interimEl) {
-        interimEl = document.createElement('div');
-        interimEl.className = 'interim-bubble';
-        elTranscript.appendChild(interimEl);
+    if (finalChunk) pttTranscript += finalChunk;
+
+    // Show live interim text
+    let el = document.getElementById('interim-live');
+    const display = interim || pttTranscript;
+    if (display) {
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'interim-live';
+        el.className = 'interim-bubble';
+        elTranscript.appendChild(el);
       }
-      interimEl.textContent = interim;
+      el.textContent = display;
       elTranscript.scrollTop = elTranscript.scrollHeight;
-    }
-    if (final.trim()) {
-      if (interimEl) { interimEl.remove(); interimEl = null; }
-      handleSpeech(final.trim());
     }
   };
 
   recognition.onend = () => {
-    if (interimEl) { interimEl.remove(); interimEl = null; }
-    if (isListening && !isSpeaking) setTimeout(() => { if (isListening && !isSpeaking) _startRec(); }, 120);
+    // If still holding button and nothing interrupted us, restart recognition
+    if (isListening && pttActive) {
+      try { recognition.start(); } catch(_) {}
+    }
   };
 
   recognition.onerror = evt => {
-    if (evt.error === 'no-speech' || evt.error === 'aborted') {
-      if (isListening && !isSpeaking) setTimeout(() => _startRec(), 200);
+    if (evt.error !== 'aborted' && isListening && pttActive) {
+      try { recognition.start(); } catch(_) {}
     }
   };
 
   try { recognition.start(); } catch(_) {}
 }
 
-function stopListening() {
+function stopPTTAndSend() {
   isListening = false;
   try { recognition?.stop(); } catch(_) {}
   recognition = null;
-  if (!isSpeaking) { orb.setState('IDLE'); setStatus('Slide the mic to start talking', ''); }
+
+  // Remove interim bubble
+  document.getElementById('interim-live')?.remove();
+
+  const text = pttTranscript.trim();
+  pttTranscript = '';
+
+  if (text) {
+    handleSpeech(text);
+  } else {
+    orb.setState('IDLE');
+    setStatus('Hold the button to speak', '');
+  }
 }
 
-// ── Conversation ──────────────────────────────────────
+function interruptSafiya() {
+  // Stop audio mid-playback
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  // Cancel pending TTS fetch
+  ttsFetchCtrl?.abort();
+  ttsFetchCtrl = null;
+
+  isSpeaking   = false;
+  isProcessing = false;
+
+  elPttBtn.classList.remove('speaking-interrupt');
+  orb.setState('IDLE');
+
+  // Small delay then start listening
+  setTimeout(() => {
+    if (pttActive) startPTT();
+  }, 80);
+}
+
+// ── Conversation ──────────────────────────────
 
 async function handleSpeech(text) {
-  if (!text || isSpeaking) return;
-  try { recognition?.stop(); } catch(_) {}
+  if (!text) return;
 
   addMsg('user', text);
   history.push({ role: 'user', content: text });
@@ -798,6 +720,8 @@ async function handleSpeech(text) {
 
   setStatus('Safiya is thinking…', 'thinking');
   orb.setState('IDLE');
+  isProcessing = true;
+  elPttBtn.classList.add('speaking-interrupt');
 
   const typingEl = addTyping();
 
@@ -814,54 +738,63 @@ async function handleSpeech(text) {
     history.push({ role: 'assistant', content: reply });
     addMsg('assistant', reply);
     sessionMsgs++;
+
+    isProcessing = false;
     await speak(reply);
   } catch(err) {
     typingEl.remove();
+    isProcessing = false;
+    elPttBtn.classList.remove('speaking-interrupt');
     addMsg('system', 'Something went wrong. Try again!');
-    setStatus('Error — try again', '');
+    setStatus('Hold the button to speak', '');
     orb.setState('IDLE');
-  } finally {
-    if (isListening && elMicCheck.checked && !isSpeaking)
-      setTimeout(() => { if (isListening && !isSpeaking) _startRec(); }, 400);
   }
 }
 
-// ── TTS ───────────────────────────────────────────────
+// ── TTS ───────────────────────────────────────
 
 async function speak(text) {
+  if (!text) return;
   isSpeaking = true;
-  setStatus('Safiya is speaking…', 'speaking');
+  setStatus('Safiya is speaking… (tap to interrupt)', 'speaking');
   orb.setState('SPEAKING');
+
+  ttsFetchCtrl = new AbortController();
 
   try {
     const res = await fetch(`${BACKEND}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
+      signal: ttsFetchCtrl.signal,
     });
+
     if (!res.ok) throw new Error(`TTS ${res.status}`);
 
-    const blob  = await res.blob();
-    const url   = URL.createObjectURL(blob);
-    const audio = new Audio(url);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
 
     await new Promise((resolve, reject) => {
-      audio.onended = resolve;
-      audio.onerror = reject;
-      audio.play().catch(reject);
+      currentAudio.onended = resolve;
+      currentAudio.onerror = reject;
+      currentAudio.play().catch(reject);
     });
+
     URL.revokeObjectURL(url);
   } catch(err) {
-    console.error('TTS:', err);
+    if (err.name !== 'AbortError') console.error('TTS:', err);
   } finally {
-    isSpeaking = false;
-    orb.setState(elMicCheck.checked ? 'LISTENING' : 'IDLE');
-    setStatus(elMicCheck.checked ? 'Listening…' : 'Slide the mic to start talking',
-              elMicCheck.checked ? 'listening' : '');
+    currentAudio = null;
+    ttsFetchCtrl = null;
+    isSpeaking   = false;
+    elPttBtn.classList.remove('speaking-interrupt');
+    orb.setState('IDLE');
+    setStatus('Hold the button to speak', '');
   }
 }
 
-// ── Leaderboard ───────────────────────────────────────
+// ── Leaderboard ───────────────────────────────
 
 async function showLeaderboard() {
   elLbModal.classList.remove('hidden');
@@ -876,14 +809,8 @@ async function showLeaderboard() {
       row.className = 'lb-row';
       row.innerHTML = `
         <span class="lb-rank ${i<3?'top':''}">${MEDALS[i]||i+1}</span>
-        <div class="lb-info">
-          <p class="lb-name">${esc(s.name)}</p>
-          <p class="lb-level">${esc(s.level)}</p>
-        </div>
-        <div class="lb-stats">
-          <p class="lb-msgs">${s.messages_sent??0} msgs</p>
-          <p class="lb-mins">${Math.round(s.minutes_spent??0)} min</p>
-        </div>`;
+        <div class="lb-info"><p class="lb-name">${esc(s.name)}</p><p class="lb-level">${esc(s.level)}</p></div>
+        <div class="lb-stats"><p class="lb-msgs">${s.messages_sent??0} msgs</p><p class="lb-mins">${Math.round(s.minutes_spent??0)} min</p></div>`;
       elLbList.appendChild(row);
     });
   } catch(_) {
@@ -891,20 +818,18 @@ async function showLeaderboard() {
   }
 }
 
-// ── UI helpers ────────────────────────────────────────
+// ── UI helpers ────────────────────────────────
 
 function addMsg(role, text) {
   const wrap = document.createElement('div');
   wrap.className = `msg ${role}`;
   if (role === 'assistant') {
     const lbl = document.createElement('p');
-    lbl.className = 'msg-label';
-    lbl.textContent = 'SAFIYA';
+    lbl.className = 'msg-label'; lbl.textContent = 'SAFIYA';
     wrap.appendChild(lbl);
   }
   const b = document.createElement('div');
-  b.className = 'msg-bubble';
-  b.textContent = text;
+  b.className = 'msg-bubble'; b.textContent = text;
   wrap.appendChild(b);
   elTranscript.appendChild(wrap);
   requestAnimationFrame(() => elTranscript.scrollTo({ top: elTranscript.scrollHeight, behavior: 'smooth' }));
@@ -929,12 +854,11 @@ function addTyping() {
 function setStatus(text, cls = '') { elStatus.textContent = text; elStatus.className = cls; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── API ───────────────────────────────────────────────
+// ── API ───────────────────────────────────────
 
 async function apiPost(path, body) {
   const res = await fetch(`${BACKEND}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error||`HTTP ${res.status}`); }
@@ -954,7 +878,7 @@ async function logSession() {
   catch(_) {}
 }
 
-// ── Boot ──────────────────────────────────────────────
+// Boot
 init();
 </script>
 </body>
