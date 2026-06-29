@@ -430,9 +430,8 @@ async def transcribe_voice(file_bytes):
 
 def main_reply_keyboard():
     return ReplyKeyboardMarkup([
-        [KeyboardButton("💡 Idea Generator"), KeyboardButton("🎤 Speaking Practice")],
-        [KeyboardButton("📖 Dictionary"), KeyboardButton("🛠 Skills")],
-        [KeyboardButton("📝 Complaints & Offers")]
+        [KeyboardButton("💡 Idea Generator"), KeyboardButton("📖 Dictionary")],
+        [KeyboardButton("🛠 Skills"), KeyboardButton("📝 Complaints & Offers")]
     ], resize_keyboard=True, input_field_placeholder="Chat with Safiya...")
 
 def skills_levels_keyboard():
@@ -551,13 +550,6 @@ async def handle_message(update,context):
         if not await require_membership(update,context): return
         sess["mode"]="idea_gen"
         await update.message.reply_text("💡 *Idea Generator*\n\nType your IELTS Task 2 topic and I'll give you FOR and AGAINST ideas plus useful vocabulary!\n\nExample: *Social media is harmful to society*",parse_mode="Markdown"); return
-
-    if text=="🎤 Speaking Practice":
-        if not await require_membership(update,context): return
-        await update.message.reply_text(
-            "🎤 Open the Speaking Practice mini app:",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎤 Speaking Practice", url="https://t.me/PTC_assistantbot/safiya_ai")]]))
-        return
 
     if text=="📖 Dictionary":
         if not await require_membership(update,context): return
@@ -781,9 +773,8 @@ def main():
     app.add_handler(MessageHandler(filters.VOICE,handle_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,handle_message))
     print("Safiya is running!")
- 
-    import time; time.sleep(8)
     app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__=="__main__":
     main()
+                                                                                                                                                                                                                                                                                                                                                                                                                               
