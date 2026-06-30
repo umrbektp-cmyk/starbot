@@ -130,6 +130,7 @@
       </div>
       <div class="header-actions">
         <button class="icon-btn" id="lang-btn">EN</button>
+        <button class="icon-btn" id="mock-btn" style="font-size:11px;letter-spacing:0.04em;width:46px;background:rgba(124,58,237,0.09);border-color:rgba(124,58,237,0.4);">MOCK</button>
         <button class="icon-btn" id="lb-btn">🏆</button>
       </div>
     </div>
@@ -343,7 +344,7 @@ const $=id=>document.getElementById(id);
 const elWelcome=$('welcome'),elMain=$('main'),elGreeting=$('greeting'),elNameWrap=$('name-input-wrap');
 const elNameInput=$('name-input'),elStartBtn=$('start-btn'),elSubtitle=$('subtitle');
 const elStatus=$('status-text'),elMicCheck=$('mic-check'),elHeaderName=$('header-name');
-const elHeaderLvl=$('header-level'),elLangBtn=$('lang-btn'),elLbBtn=$('lb-btn');
+const elHeaderLvl=$('header-level'),elLangBtn=$('lang-btn'),elLbBtn=$('lb-btn'),elMockBtn=$('mock-btn');
 const elLbModal=$('lb-modal'),elLbClose=$('lb-close'),elLbList=$('lb-list');
 
 // ── Init ──────────────────────────────────────
@@ -361,6 +362,7 @@ function init() {
   elMicCheck.addEventListener('change',()=>{ elMicCheck.checked ? micStart() : micStop(); });
   elLangBtn.addEventListener('click',()=>{ language=language==='EN'?'UZ':'EN'; elLangBtn.textContent=language; if(recog)recog.lang=language==='EN'?'en-US':'uz-UZ'; });
   elLbBtn.addEventListener('click',showLeaderboard);
+  elMockBtn.addEventListener('click',openMockExam);
   elLbClose.addEventListener('click',()=>elLbModal.classList.add('hidden'));
   elLbModal.addEventListener('click',e=>{if(e.target===elLbModal)elLbModal.classList.add('hidden');});
   window.addEventListener('beforeunload',logSession);
@@ -525,6 +527,12 @@ async function speak(text) {
 }
 
 // ── Leaderboard ───────────────────────────────
+function openMockExam() {
+  // TODO: full mock exam screen — coming soon
+  showSubtitle('Mock exam coming soon! 🎓', 'assistant');
+  fadeSubtitle(3000);
+}
+
 async function showLeaderboard() {
   elLbModal.classList.remove('hidden'); elLbList.innerHTML='<p class="lb-empty">Loading…</p>';
   try {
