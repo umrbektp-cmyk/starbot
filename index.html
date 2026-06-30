@@ -95,11 +95,151 @@
     .lb-mins { font-size: 11px; color: #9ca3af; }
     .lb-empty { text-align: center; padding: 32px; color: #9ca3af; font-size: 14px; }
 
+    /* ── MOCK EXAM OVERLAY ────────────────────────────────────────────────── */
+    #mock-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(15,12,50,0.92); display: flex; flex-direction: column; }
+    #mock-overlay.hidden { display: none !important; }
+
+    #mock-top-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; padding-top: calc(14px + env(safe-area-inset-top,0px)); flex-shrink: 0; }
+    #mock-part-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.05em; }
+    #mock-end-btn { background: rgba(220,38,38,0.15); border: 1.5px solid rgba(220,38,38,0.4); color: #fca5a5; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 10px; cursor: pointer; touch-action: manipulation; }
+    #mock-end-btn:active { background: rgba(220,38,38,0.3); }
+
+    #mock-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 20px; padding-bottom: max(20px, env(safe-area-inset-bottom, 20px)); overflow: hidden; }
+
+    .mock-panel { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+    .mock-panel.hidden { display: none !important; }
+
+    .mock-icon { font-size: 48px; }
+    .mock-spinner { width: 36px; height: 36px; border: 3px solid rgba(127,119,221,0.2); border-top-color: #7F77DD; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mock-panel h2 { font-size: 20px; font-weight: 700; color: white; margin: 0; line-height: 1.3; }
+    .mock-panel p { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0; }
+    .mock-panel b { color: #a5b4fc; }
+    .mock-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,#7c3aed,#2563eb); color: white; border: none; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+    .mock-btn-ghost { width: 100%; padding: 13px; background: transparent; color: rgba(255,255,255,0.5); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 16px; font-size: 14px; cursor: pointer; touch-action: manipulation; }
+    .mock-part-list { list-style: none; text-align: left; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    .mock-part-list li { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.7); }
+    .mock-part-list li b { color: #a5b4fc; display: block; font-size: 12px; margin-bottom: 2px; }
+
+    /* Exam panel */
+    #panel-exam { justify-content: space-between; height: 100%; max-width: 100%; }
+    #exam-question-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 24px 20px; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    #exam-question-text { font-size: 18px; font-weight: 500; color: white; line-height: 1.5; text-align: center; }
+    #exam-subtitle { font-size: 13px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.5; min-height: 40px; text-align: center; }
+    #exam-subtitle.exam-sub-examiner { color: #c4b5fd; font-style: normal; }
+    .rec-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.4); }
+    .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    /* Timer */
+    #exam-timer-wrap { width: 100%; margin-top: 14px; }
+    #exam-timer-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+    #exam-timer-bar { height: 6px; background: linear-gradient(90deg,#7F77DD,#2563eb); border-radius: 3px; transition: width 0.9s linear; }
+    #exam-timer-text { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 6px; display: block; text-align: right; }
+
+    /* Part 2 prep */
+    #panel-p2prep { gap: 12px; }
+    #prep-timer-display { font-size: 52px; font-weight: 700; color: #a5b4fc; line-height: 1; }
+    #cue-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 18px 20px; width: 100%; text-align: left; }
+    #cue-title { font-size: 15px; font-weight: 700; color: white; margin: 0 0 12px; line-height: 1.4; }
+    #cue-bullets { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 0 0 10px; }
+    #cue-bullets li { font-size: 13px; color: rgba(255,255,255,0.65); padding-left: 14px; position: relative; }
+    #cue-bullets li::before { content: '·'; position: absolute; left: 0; color: #7F77DD; }
+    #cue-closing { font-size: 13px; color: rgba(255,255,255,0.5); font-style: italic; margin: 0; }
+
+    /* Waiting */
+    #waiting-status { font-size: 14px; color: #a5b4fc; font-weight: 500; }
+
   </style>
 </head>
 <body>
 
 <canvas id="orb-canvas"></canvas>
+
+<!-- MOCK EXAM OVERLAY -->
+<div id="mock-overlay" class="hidden">
+  <div id="mock-top-bar">
+    <span id="mock-part-label">IELTS Speaking Mock</span>
+    <button id="mock-end-btn">End Exam</button>
+  </div>
+  <div id="mock-content">
+
+    <!-- Checking access -->
+    <div id="panel-check" class="mock-panel">
+      <div class="mock-spinner"></div>
+      <p>Checking your access…</p>
+    </div>
+
+    <!-- No access -->
+    <div id="panel-denied" class="mock-panel hidden">
+      <div class="mock-icon">🔒</div>
+      <h2>No attempts available</h2>
+      <p id="deny-msg">Contact <b>@Umrbektp</b> to buy more credits, or wait <b><span id="deny-days">?</span> days</b> for your free try.</p>
+      <button class="mock-btn-ghost" onclick="closeMockExam()">Close</button>
+    </div>
+
+    <!-- Intro -->
+    <div id="panel-intro" class="mock-panel hidden">
+      <div class="mock-icon">🎓</div>
+      <h2>IELTS Mock Speaking</h2>
+      <p>This test has 3 parts and takes about 12–14 minutes. Speak clearly and try to give full answers.</p>
+      <ul class="mock-part-list">
+        <li><b>Part 1 — 5 min</b>General questions about yourself and everyday topics</li>
+        <li><b>Part 2 — 3 min</b>1 min prep, then speak for up to 2 minutes on a topic</li>
+        <li><b>Part 3 — 5 min</b>Discussion questions related to Part 2</li>
+      </ul>
+      <button class="mock-btn" id="btn-begin-exam">Begin Exam</button>
+      <button class="mock-btn-ghost" onclick="closeMockExam()">Cancel</button>
+    </div>
+
+    <!-- Loading questions -->
+    <div id="panel-loading" class="mock-panel hidden">
+      <div class="mock-spinner"></div>
+      <p>Preparing your exam…</p>
+    </div>
+
+    <!-- Exam in progress (Part 1, Part 2 speaking, Part 3) -->
+    <div id="panel-exam" class="mock-panel hidden">
+      <div id="exam-question-card">
+        <div class="rec-indicator"><div class="rec-dot"></div><span>Recording</span></div>
+        <p id="exam-question-text">…</p>
+        <p id="exam-subtitle"></p>
+      </div>
+      <div id="exam-timer-wrap">
+        <div id="exam-timer-track"><div id="exam-timer-bar" style="width:100%"></div></div>
+        <span id="exam-timer-text">0:30</span>
+      </div>
+    </div>
+
+    <!-- Part 2 prep (cue card + countdown) -->
+    <div id="panel-p2prep" class="mock-panel hidden">
+      <p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0">preparation time</p>
+      <div id="prep-timer-display">1:00</div>
+      <div id="cue-card">
+        <p id="cue-title"></p>
+        <ul id="cue-bullets"></ul>
+        <p id="cue-closing"></p>
+      </div>
+    </div>
+
+    <!-- Submitting -->
+    <div id="panel-submitting" class="mock-panel hidden">
+      <div class="mock-spinner"></div>
+      <h2>Submitting your exam…</h2>
+      <p>Please wait, this may take a moment.</p>
+    </div>
+
+    <!-- Waiting for results -->
+    <div id="panel-waiting" class="mock-panel hidden">
+      <div class="mock-icon">⏳</div>
+      <h2>Results being reviewed</h2>
+      <p>Your examiner will review your recording and send your detailed result card to your Telegram.</p>
+      <p id="waiting-status" style="color:#a5b4fc;font-weight:500">Awaiting review…</p>
+      <button class="mock-btn-ghost" onclick="closeMockExam()">Close</button>
+    </div>
+
+  </div>
+</div>
 <div id="app">
 
   <!-- WELCOME -->
@@ -365,6 +505,8 @@ function init() {
   elLangBtn.addEventListener('click',()=>{ language=language==='EN'?'UZ':'EN'; elLangBtn.textContent=language; if(recog)recog.lang=language==='EN'?'en-US':'uz-UZ'; });
   elLbBtn.addEventListener('click',showLeaderboard);
   $('mock-entry-btn').addEventListener('click',openMockExam);
+  $('btn-begin-exam').addEventListener('click',beginExam);
+  $('mock-end-btn').addEventListener('click',endExamEarly);
   elLbClose.addEventListener('click',()=>elLbModal.classList.add('hidden'));
   elLbModal.addEventListener('click',e=>{if(e.target===elLbModal)elLbModal.classList.add('hidden');});
   window.addEventListener('beforeunload',logSession);
@@ -528,12 +670,421 @@ async function speak(text) {
   }
 }
 
-// ── Leaderboard ───────────────────────────────
-function openMockExam() {
-  // TODO: full mock exam screen — coming soon
-  showSubtitle('Mock exam coming soon! 🎓', 'assistant');
-  fadeSubtitle(3000);
+// ── MOCK EXAM ─────────────────────────────────
+
+let mockQuestions = null;
+let mockTranscripts = { p1: [], p2: '', p3: '' };
+let mockAudio      = { p1: null, p2: null, p3: null };
+let mockStream     = null;
+let mockRecorder   = null;
+let mockPartChunks = {};
+let mockTimer      = null;
+let mockPollTimer  = null;
+let mockAttemptId  = null;
+let mockUseFree    = false;
+let mockCurrentPart = 0;
+let mockCurrentQ    = 0;
+let mockCurrentTranscript = '';
+let mockExamEnded  = false;
+let examRecog      = null;
+let ackIdx = 0, followIdx = 0;
+
+const ACKS = ['Thank you.','Right, thank you.','OK, thank you for that.','Thank you for sharing that.'];
+const FOLLOW_UPS = ['Could you tell me a little more about that?','Why do you feel that way?','Can you expand on that a bit more?'];
+const randomAck = () => ACKS[ackIdx++ % ACKS.length];
+const randomFollowUp = () => FOLLOW_UPS[followIdx++ % FOLLOW_UPS.length];
+
+async function openMockExam() {
+  mockExamEnded = false;
+  $('mock-overlay').classList.remove('hidden');
+  showMockPanel('check');
+  try {
+    const r = await apiPost('/mock/check', { studentId: student?.id });
+    if (!r.access) {
+      $('deny-days').textContent = r.daysLeft || '?';
+      showMockPanel('denied');
+      return;
+    }
+    mockUseFree = r.useFree || (r.freeAvailable && (r.credits || 0) === 0);
+    showMockPanel('intro');
+  } catch {
+    $('deny-msg').textContent = 'Could not connect. Please try again.';
+    showMockPanel('denied');
+  }
 }
+
+function closeMockExam() {
+  mockExamEnded = true;
+  clearMockTimers();
+  stopExamRec();
+  stopMockStream();
+  $('mock-overlay').classList.add('hidden');
+  mockQuestions = null;
+  mockTranscripts = { p1:[], p2:'', p3:'' };
+  mockAudio = { p1:null, p2:null, p3:null };
+  mockPartChunks = {};
+  mockCurrentPart = 0; mockCurrentQ = 0;
+  mockCurrentTranscript = '';
+}
+
+function showMockPanel(name) {
+  document.querySelectorAll('.mock-panel').forEach(p => p.classList.add('hidden'));
+  $(`panel-${name}`)?.classList.remove('hidden');
+}
+
+async function beginExam() {
+  showMockPanel('loading');
+  try {
+    mockQuestions = await apiPost('/mock/start', { studentId: student?.id });
+  } catch {
+    alert('Failed to load exam questions. Please try again.');
+    showMockPanel('intro');
+    return;
+  }
+  try {
+    mockStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  } catch {
+    alert('Microphone permission is required for the exam.');
+    showMockPanel('intro');
+    return;
+  }
+  await startPart1();
+}
+
+// ── Part 1 ────────────────────────────────────
+async function startPart1() {
+  if (mockExamEnded) return;
+  mockCurrentPart = 1; mockCurrentQ = 0; mockTranscripts.p1 = [];
+  startPartRec('p1');
+  showMockPanel('exam');
+  updateMockLabel('Part 1 of 3');
+  $('exam-question-text').textContent = '…';
+  await examSpeak("Now in this first part, I'd like to ask you some questions about yourself and everyday topics.");
+  await runP1Question();
+}
+
+async function runP1Question() {
+  if (mockExamEnded) return;
+  if (mockCurrentQ >= (mockQuestions?.p1?.length || 0)) { await endPart1(); return; }
+  const q = mockQuestions.p1[mockCurrentQ];
+  $('exam-question-text').textContent = q;
+  await examSpeak(q);
+  if (mockExamEnded) return;
+  await runAnswerTimer(30, async () => {
+    const ans = mockCurrentTranscript.trim();
+    mockTranscripts.p1.push(ans || '(no answer)');
+    mockCurrentTranscript = '';
+    mockCurrentQ++;
+    if (mockCurrentQ < mockQuestions.p1.length && !mockExamEnded) {
+      await examSpeak(randomAck());
+    }
+    await runP1Question();
+  }, async () => { await examSpeak(randomFollowUp()); });
+}
+
+async function endPart1() {
+  if (mockExamEnded) return;
+  await stopPartRec('p1');
+  await examSpeak("Thank you. Now we'll move on to the next part of the test.");
+  await startP2Prep();
+}
+
+// ── Part 2 prep ───────────────────────────────
+async function startP2Prep() {
+  if (mockExamEnded) return;
+  mockCurrentPart = 2;
+  showMockPanel('p2prep');
+  updateMockLabel('Part 2 of 3 — Preparation');
+  const p2 = mockQuestions.p2;
+  $('cue-title').textContent = p2.title || '';
+  $('cue-bullets').innerHTML = (p2.bullets || []).map(b => `<li>${esc(b)}</li>`).join('');
+  $('cue-closing').textContent = p2.closing || '';
+  await examSpeak("Now I'm going to give you a topic. You'll have one minute to prepare. Here is your topic.");
+  if (mockExamEnded) return;
+  await runPrepTimer(60, () => startP2Speak());
+}
+
+// ── Part 2 speaking ───────────────────────────
+async function startP2Speak() {
+  if (mockExamEnded) return;
+  showMockPanel('exam');
+  updateMockLabel('Part 2 of 3 — Long Turn');
+  $('exam-question-text').textContent = mockQuestions.p2.title || '';
+  $('exam-subtitle').textContent = '';
+  startPartRec('p2');
+  await examSpeak("Your minute is up. Please begin.");
+  if (mockExamEnded) return;
+  startExamRec(); // Start STT for transcript
+  await runAnswerTimer(120, async () => {
+    mockTranscripts.p2 = mockCurrentTranscript.trim();
+    mockCurrentTranscript = '';
+    await stopPartRec('p2');
+    await examSpeak("Thank you, we'll stop there.");
+    await startP3();
+  }, null);
+}
+
+// ── Part 3 ────────────────────────────────────
+async function startP3() {
+  if (mockExamEnded) return;
+  mockCurrentPart = 3; mockCurrentQ = 0; mockTranscripts.p3 = '';
+  startPartRec('p3');
+  showMockPanel('exam');
+  updateMockLabel('Part 3 of 3');
+  $('exam-question-text').textContent = '…';
+  await examSpeak("Now I'd like to discuss with you some more general questions related to this topic.");
+  await runP3Question();
+}
+
+async function runP3Question() {
+  if (mockExamEnded) return;
+  if (mockCurrentQ >= (mockQuestions?.p3?.length || 0)) { await endPart3(); return; }
+  const q = mockQuestions.p3[mockCurrentQ];
+  $('exam-question-text').textContent = q;
+  await examSpeak(q);
+  if (mockExamEnded) return;
+  await runAnswerTimer(40, async () => {
+    const ans = mockCurrentTranscript.trim();
+    mockTranscripts.p3 += (ans || '(no answer)') + '\n';
+    mockCurrentTranscript = '';
+    mockCurrentQ++;
+    if (mockCurrentQ < mockQuestions.p3.length && !mockExamEnded) {
+      await examSpeak(randomAck());
+    }
+    await runP3Question();
+  }, async () => { await examSpeak(randomFollowUp()); });
+}
+
+async function endPart3() {
+  if (mockExamEnded) return;
+  await stopPartRec('p3');
+  await examSpeak("Well, that is the end of the speaking test. Thank you very much.");
+  await submitMockExam();
+}
+
+// ── End exam early ────────────────────────────
+async function endExamEarly() {
+  if (mockExamEnded) return;
+  if (!confirm('End the exam now? What you\'ve completed will be submitted.')) return;
+  mockExamEnded = true;
+  clearMockTimers();
+  stopExamRec();
+  if (mockCurrentTranscript.trim()) {
+    if (mockCurrentPart === 1) mockTranscripts.p1.push(mockCurrentTranscript.trim());
+    else if (mockCurrentPart === 2) mockTranscripts.p2 = mockCurrentTranscript.trim();
+    else if (mockCurrentPart === 3) mockTranscripts.p3 += mockCurrentTranscript.trim();
+  }
+  await stopPartRec('p1');
+  await stopPartRec('p2');
+  await stopPartRec('p3');
+  mockExamEnded = false; // Allow submitMockExam to run
+  await submitMockExam();
+}
+
+// ── Timer helpers ─────────────────────────────
+async function runAnswerTimer(seconds, onEnd, onShortAnswer) {
+  let remaining = seconds;
+  let shortTriggered = false;
+  updateExamTimer(remaining, seconds);
+  startExamRec();
+
+  await new Promise(resolve => {
+    async function tick() {
+      if (mockExamEnded) { resolve(); return; }
+      remaining--;
+      updateExamTimer(remaining, seconds);
+
+      if (!shortTriggered && onShortAnswer && remaining === Math.floor(seconds * 0.55)) {
+        const wc = mockCurrentTranscript.trim().split(/\s+/).filter(Boolean).length;
+        if (wc < 10) {
+          shortTriggered = true;
+          stopExamRec();
+          await onShortAnswer();
+          if (!mockExamEnded) startExamRec();
+          remaining = Math.min(remaining + 15, seconds);
+        }
+      }
+
+      if (remaining <= 0 || mockExamEnded) {
+        stopExamRec();
+        resolve();
+        if (!mockExamEnded) onEnd().catch(console.error);
+        return;
+      }
+      mockTimer = setTimeout(tick, 1000);
+    }
+    mockTimer = setTimeout(tick, 1000);
+  });
+}
+
+async function runPrepTimer(seconds, onEnd) {
+  let remaining = seconds;
+  updatePrepTimer(remaining);
+  await new Promise(resolve => {
+    function tick() {
+      if (mockExamEnded) { resolve(); return; }
+      remaining--;
+      updatePrepTimer(remaining);
+      if (remaining <= 0) { resolve(); onEnd(); return; }
+      mockTimer = setTimeout(tick, 1000);
+    }
+    mockTimer = setTimeout(tick, 1000);
+  });
+}
+
+function updateExamTimer(remaining, total) {
+  const m = Math.floor(remaining/60), s = remaining%60;
+  const t = $('exam-timer-text'), b = $('exam-timer-bar');
+  if (t) t.textContent = `${m}:${String(s).padStart(2,'0')}`;
+  if (b) b.style.width = `${Math.max(0,(remaining/total)*100)}%`;
+}
+
+function updatePrepTimer(remaining) {
+  const m = Math.floor(remaining/60), s = remaining%60;
+  const el = $('prep-timer-display');
+  if (el) el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function clearMockTimers() {
+  if (mockTimer) { clearTimeout(mockTimer); mockTimer = null; }
+  if (mockPollTimer) { clearInterval(mockPollTimer); mockPollTimer = null; }
+}
+
+function updateMockLabel(text) { const el = $('mock-part-label'); if (el) el.textContent = text; }
+
+// ── Recording helpers ─────────────────────────
+function startPartRec(part) {
+  if (!mockStream) return;
+  try {
+    mockPartChunks[part] = [];
+    const mr = new MediaRecorder(mockStream);
+    mr.ondataavailable = e => { if (e.data?.size > 0) mockPartChunks[part].push(e.data); };
+    mr.start(1000);
+    mockRecorder = mr;
+  } catch(e) { console.error('[rec-start]', e.message); }
+}
+
+function stopPartRec(part) {
+  return new Promise(resolve => {
+    if (!mockRecorder || mockRecorder.state === 'inactive') { resolve(); return; }
+    const mr = mockRecorder;
+    mockRecorder = null;
+    mr.onstop = async () => {
+      try {
+        const blob = new Blob(mockPartChunks[part] || [], { type: 'audio/webm' });
+        if (blob.size > 0) mockAudio[part] = await blobToBase64(blob);
+      } catch {}
+      resolve();
+    };
+    mr.stop();
+  });
+}
+
+function stopMockStream() {
+  if (mockRecorder && mockRecorder.state !== 'inactive') mockRecorder.stop();
+  mockRecorder = null;
+  if (mockStream) { mockStream.getTracks().forEach(t => t.stop()); mockStream = null; }
+}
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── Speech recognition (exam) ─────────────────
+function startExamRec() {
+  if (!window.SpeechRecognition && !window.webkitSpeechRecognition) return;
+  try {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    examRecog = new SR();
+    examRecog.continuous = true; examRecog.interimResults = true; examRecog.lang = 'en-US';
+    examRecog.onresult = evt => {
+      let fin = '', int = '';
+      for (let i = evt.resultIndex; i < evt.results.length; i++) {
+        const t = evt.results[i][0].transcript;
+        if (evt.results[i].isFinal) fin += t; else int += t;
+      }
+      if (fin) mockCurrentTranscript += ' ' + fin;
+      const el = $('exam-subtitle');
+      if (el && !el.classList.contains('exam-sub-examiner'))
+        el.textContent = (mockCurrentTranscript + ' ' + int).trim();
+    };
+    examRecog.onerror = () => {};
+    examRecog.start();
+  } catch {}
+}
+
+function stopExamRec() {
+  if (examRecog) { try { examRecog.stop(); } catch {} examRecog = null; }
+}
+
+// ── Examiner TTS ──────────────────────────────
+async function examSpeak(text) {
+  stopExamRec();
+  const el = $('exam-subtitle');
+  if (el) { el.textContent = text; el.className = 'exam-sub-examiner'; }
+  try {
+    const res = await fetch(`${BACKEND}/tts`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text}) });
+    if (!res.ok) throw new Error('tts fail');
+    const blob = await res.blob(), url = URL.createObjectURL(blob);
+    await new Promise((resolve, reject) => {
+      const a = new Audio(url);
+      a.onended = resolve; a.onerror = reject;
+      a.play().catch(reject);
+    });
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    if (e.name !== 'AbortError') console.error('[examSpeak]', e.message);
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  if (el) el.className = '';
+}
+
+// ── Submit ────────────────────────────────────
+async function submitMockExam() {
+  if (mockExamEnded) return;
+  showMockPanel('submitting');
+  stopMockStream();
+  try {
+    const r = await apiPost('/mock/submit', {
+      studentId:    student?.id,
+      studentName:  student?.name,
+      telegramId:   tg?.initDataUnsafe?.user?.id,
+      transcript_p1: mockTranscripts.p1,
+      transcript_p2: mockTranscripts.p2,
+      transcript_p3: mockTranscripts.p3,
+      p1_questions:  mockQuestions?.p1 || [],
+      p2_topic:      mockQuestions?.p2?.title || '',
+      useFree:       mockUseFree,
+      audio_p1:      mockAudio.p1,
+      audio_p2:      mockAudio.p2,
+      audio_p3:      mockAudio.p3,
+    });
+    mockAttemptId = r.attemptId;
+    showMockPanel('waiting');
+    mockPollTimer = setInterval(async () => {
+      if (!mockAttemptId) return;
+      try {
+        const s = await apiFetch(`/mock/status?attemptId=${mockAttemptId}`);
+        if (s.status === 'approved') {
+          clearInterval(mockPollTimer);
+          const el = $('waiting-status');
+          if (el) { el.textContent = '✅ Results sent to your Telegram!'; el.style.color = '#34d399'; }
+        }
+      } catch {}
+    }, 30000);
+  } catch(e) {
+    showMockPanel('waiting');
+    const el = $('waiting-status');
+    if (el) { el.textContent = 'Submission error. Please contact @Umrbektp.'; el.style.color = '#fca5a5'; }
+  }
+}
+
+// ── Leaderboard ───────────────────────────────
 
 async function showLeaderboard() {
   elLbModal.classList.remove('hidden'); elLbList.innerHTML='<p class="lb-empty">Loading…</p>';
