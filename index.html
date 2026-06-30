@@ -204,7 +204,7 @@ class Orb {
   _ease(t) { return t<0.5?2*t*t:-1+(4-2*t)*t; }
   _tick() {
     this.frame++;
-    if (this.state==='SPEAKING') this.burst = Math.min(1, this.burst+0.055);
+    if (this.state==='SPEAKING') this.burst = Math.min(1, this.burst+0.022);
     else                          this.burst = Math.max(0, this.burst-0.018);
 
     const eased = this._ease(this.burst);
@@ -215,7 +215,7 @@ class Orb {
       if (this.state === 'SPEAKING') {
         // Ripple wave: inner nodes (baseNorm~0) lead, outer follow.
         // scatterPhase randomises each node so no two move in lockstep.
-        const wave = (Math.sin(this.frame*0.075 - n.baseNorm*Math.PI*2.2 + n.scatterPhase) + 1) / 2;
+        const wave = (Math.sin(this.frame*0.032 - n.baseNorm*Math.PI*2.2 + n.scatterPhase) + 1) / 2;
         // Mix: home position at burst=0, scatter position at burst=1
         const homeDist = n.baseR;
         const scatterDist = this.baseR*0.18 + wave * (this.burstR*0.88 - this.baseR*0.18);
@@ -277,9 +277,9 @@ class Orb {
 
     // Listening pulse ring
     if(this.state==='LISTENING'){
-      const rr = baseR*0.92 + Math.sin(frame*0.13)*baseR*0.07;
+      const rr = baseR*0.92 + Math.sin(frame*0.05)*baseR*0.07;
       ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2);
-      ctx.strokeStyle = `rgba(127,119,221,${0.22+Math.sin(frame*0.13)*0.08})`;
+      ctx.strokeStyle = `rgba(127,119,221,${0.22+Math.sin(frame*0.05)*0.08})`;
       ctx.lineWidth = 2; ctx.stroke();
     }
 
