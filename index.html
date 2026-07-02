@@ -653,7 +653,15 @@ async function speak(text) {
     if (!res.ok) throw new Error(`TTS ${res.status}`);
     const blob=await res.blob(), url=URL.createObjectURL(blob);
     currentAudio = new Audio(url);
-    await new Promise((resolve,reject)=>{currentAudio.onended=resolve;currentAudio.onerror=reject;currentAudio.play().catch(reject);});
+    await new Promise((resolve,reject)=>{
+      // Safety net: if onended never fires (Telegram WebView bug), resolve after 15s max
+      const safety = setTimeout(resolve, 15000);
+      const done = () => { clearTimeout(safety); resolve(); };
+      currentAudio.addEventListener('ended', done);
+      currentAudio.addEventListener('pause', done);  // iOS fires pause instead of ended
+      currentAudio.onerror = () => { clearTimeout(safety); reject(new Error('audio error')); };
+      currentAudio.play().catch(e => { clearTimeout(safety); reject(e); });
+    });
     URL.revokeObjectURL(url);
   } catch(err) {
     if (err.name !== 'AbortError') console.error('TTS:', err);
