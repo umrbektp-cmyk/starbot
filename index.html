@@ -531,10 +531,13 @@ async function handleStart() {
 //  MIC
 // ══════════════════════════════════════════════
 
+let _launchPending = false; // guard against concurrent _launchRec loops
+
 function micStart() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { alert('Speech recognition not supported. Use Chrome on Android or desktop.'); elMicCheck.checked=false; return; }
   micOn = true;
+  _launchPending = false; // clear any stale pending flag on fresh start
   setStatus('Listening…', 'listening');
   orb.setState('LISTENING');
   _launchRec();
@@ -542,9 +545,18 @@ function micStart() {
 
 function _launchRec() {
   if (!micOn || isSpeaking || isProcessing) return;
-  ttsEndTime = 0; // mic is open — cooldown window has passed, clear the echo guard
+  if (_launchPending) return; // another launch already in flight — don't stack
+  _launchPending = true;
 
-  // Always create a FRESH instance — reusing after onend is unreliable on mobile
+  // Kill any lingering instance before creating a new one
+  if (recog) {
+    recog.onresult = null;
+    recog.onend    = null;
+    recog.onerror  = null;
+    try { recog.abort(); } catch(_) {}
+    recog = null;
+  }
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recog = new SR();
   recog.continuous     = true;
@@ -562,35 +574,43 @@ function _launchRec() {
     if (final.trim()) handleSpeech(final.trim());
   };
 
-  // Chrome stops recognition after silence — restart immediately with a new instance
   recog.onend = () => {
+    _launchPending = false; // release the guard so next launch can proceed
     if (micOn && !isSpeaking && !isProcessing) {
-      setTimeout(_launchRec, 50); // near-instant restart
+      setTimeout(_launchRec, 150);
     }
   };
 
   recog.onerror = evt => {
+    _launchPending = false;
     if (evt.error === 'aborted') return;
     if (micOn && !isSpeaking && !isProcessing) {
-      setTimeout(_launchRec, 100);
+      setTimeout(_launchRec, 300);
     }
   };
 
-  try { recog.start(); } catch(_) { setTimeout(_launchRec, 200); }
+  try {
+    recog.start();
+  } catch(_) {
+    _launchPending = false;
+    setTimeout(_launchRec, 300);
+  }
 }
 
 function _killRec() {
+  _launchPending = false; // always clear on explicit kill
   if (recog) {
-    recog.onresult = null;  // drop any queued transcription results
-    recog.onend    = null;  // prevent auto-restart on stop
+    recog.onresult = null;
+    recog.onend    = null;
     recog.onerror  = null;
-    try { recog.abort(); } catch(_) {}  // abort is harder than stop — kills immediately
+    try { recog.abort(); } catch(_) {}
     recog = null;
   }
 }
 
 function micStop() {
   micOn = false;
+  _launchPending = false;
   _killRec();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   ttsFetchCtrl?.abort(); ttsFetchCtrl = null;
